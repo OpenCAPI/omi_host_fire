@@ -1,0 +1,14 @@
+# IP Output Products
+*.dcp
+*.veo
+*.vho
+*.xml
+*.v
+*.vhdl
+*.txt
+*.xdc
+*.vhd
+*.vh
+/managed_ip_project/
+mb_bootloop_le.elf
+/ip_user_files/

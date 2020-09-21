@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Checkpoint Version="11" Minor="0">
+	<BUILD_NUMBER Name="2489853"/>
+	<FULL_BUILD Name="SW Build 2489853 on Tue Mar 26 04:18:30 MDT 2019"/>
+	<PRODUCT Name="Vivado v2018.3.1 (64-bit)"/>
+	<Part Name="xcvu7p-flvc2104-2-e"/>
+	<Top Name="dbg_hub"/>
+	<DisableAutoIOBuffers Name="1"/>
+	<OutOfContext Name="1"/>
+	<IpOocRunGenerated Name="1"/>
+	<HDPlatform Name="0"/>
+	<XPMLIBRARY Name="XPM_CDC"/>
+	<XPMLIBRARY Name="XPM_MEMORY"/>
+	<File Type="XDC_IN_CONTEXT" Name="dbg_hub_in_context.xdc" ModTime="1600456022"/>
+	<File Type="SHAPE" Name="dbg_hub.shape" ModTime="1600456022"/>
+	<File Type="EDIF" Name="dbg_hub.edf" ModTime="1600456022"/>
+	<File Type="VERILOG_STUB" Name="dbg_hub_stub.v" ModTime="1600456022"/>
+	<File Type="VHDL_STUB" Name="dbg_hub_stub.vhdl" ModTime="1600456022"/>
+	<File Type="XN" Name="dbg_hub.xn" ModTime="1600456022"/>
+	<File Type="INCR" Name="dbg_hub.incr" ModTime="1600456022"/>
+	<File Type="RDA" Name="dbg_hub.rda" ModTime="1600456022"/>
+	<File Type="WDF" Name="dbg_hub.wdf" ModTime="1600456022"/>
+	<File Type="RESOURSES" Name="dbg_hub.resources" ModTime="1600456022"/>
+</Checkpoint>
+

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<Checkpoint Version="11" Minor="0">
+	<BUILD_NUMBER Name="2489853"/>
+	<FULL_BUILD Name="SW Build 2489853 on Tue Mar 26 04:18:30 MDT 2019"/>
+	<PRODUCT Name="Vivado v2018.3.1 (64-bit)"/>
+	<Part Name="xcvu7p-flvc2104-2-e"/>
+	<Top Name="u_ila_rclk"/>
+	<DisableAutoIOBuffers Name="1"/>
+	<OutOfContext Name="1"/>
+	<IpOocRunGenerated Name="1"/>
+	<HDPlatform Name="0"/>
+	<XPMLIBRARY Name="XPM_CDC"/>
+	<XPMLIBRARY Name="XPM_MEMORY"/>
+	<File Type="XDC_IN_CONTEXT" Name="u_ila_rclk_in_context.xdc" ModTime="1600456146"/>
+	<File Type="SHAPE" Name="u_ila_rclk.shape" ModTime="1600456146"/>
+	<File Type="EDIF" Name="u_ila_rclk.edf" ModTime="1600456146"/>
+	<File Type="VERILOG_STUB" Name="u_ila_rclk_stub.v" ModTime="1600456146"/>
+	<File Type="VHDL_STUB" Name="u_ila_rclk_stub.vhdl" ModTime="1600456146"/>
+	<File Type="XN" Name="u_ila_rclk.xn" ModTime="1600456146"/>
+	<File Type="INCR" Name="u_ila_rclk.incr" ModTime="1600456146"/>
+	<File Type="RDA" Name="u_ila_rclk.rda" ModTime="1600456146"/>
+	<File Type="WDF" Name="u_ila_rclk.wdf" ModTime="1600456146"/>
+	<File Type="RESOURSES" Name="u_ila_rclk.resources" ModTime="1600456146"/>
+</Checkpoint>
+

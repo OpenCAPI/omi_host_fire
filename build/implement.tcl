@@ -20,6 +20,9 @@ variable SRC_DIR $::env(SRC_DIR)
 # Output Directory
 variable OUTPUT_DIR $::env(OUTPUT_PREFIX)/impl_$strategy_index
 
+# Target FPGA
+variable XILINX_PART $::env(XILINX_PART)
+
 ################################################################################
 # Implementation Strategies
 ################################################################################
@@ -163,7 +166,12 @@ file mkdir $OUTPUT_DIR
 # Open Synthesis Checkpoint
 ################################################################################
 open_checkpoint $OUTPUT_DIR/../synth_1/post_synth.dcp
-read_xdc [ glob $SRC_DIR/xdc/pins.xdc ]
+if { $XILINX_PART == "xcvu37p-fsvh2892-2-e" } {
+  read_xdc [ glob $SRC_DIR/xdc/pins_VCU128.xdc ]
+} else {
+  read_xdc [ glob $SRC_DIR/xdc/pins.xdc ]
+}
+
 
 ################################################################################
 # opt_design

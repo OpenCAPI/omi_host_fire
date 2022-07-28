@@ -79,6 +79,7 @@ module ocx_dlx_rx_lane (
  ,EDPL_error_out      // > output
  ,EDPL_ready_out      // > output
  ,rx_tx_EDPL_thres_reached // > output
+ ,lane_force_unlock
  
  
 
@@ -143,6 +144,8 @@ output [7:0]    EDPL_max_cnt_out;
 output          EDPL_error_out;
 output          rx_tx_EDPL_thres_reached;
 output          EDPL_ready_out;
+
+   input        lane_force_unlock;
 
 //-- inout gnd;
 //-- (* GROUND_PIN="1" *)
@@ -276,8 +279,8 @@ reg  [63:0]     deskew_buffer4_q;
 reg  [63:0]     deskew_buffer5_q;
 reg  [63:0]     deskew_buffer6_q;
 reg  [63:0]     deskew_buffer7_q;
-(*mark_debug = "true" *)reg  [3:0]      deskew_write_ptr_q;     //-- write pointer into the deskew buffer
-(*mark_debug = "true" *)reg  [3:0]      deskew_read_ptr_q ;      //-- read pointer from the deskew buffer
+reg  [3:0]      deskew_write_ptr_q;     //-- write pointer into the deskew buffer
+reg  [3:0]      deskew_read_ptr_q ;      //-- read pointer from the deskew buffer
 //--reg             data_flit_q   ;           //-- make sure data_flit output aligns with data since rx cannot see header
 reg             data_flit0_q   ;           //-- make sure data_flit output aligns with data since rx cannot see header
 reg             data_flit1_q   ;
@@ -287,7 +290,7 @@ reg             data_flit4_q   ;
 reg             data_flit5_q   ;
 reg             data_flit6_q   ;
 reg             data_flit7_q   ;
-(*mark_debug = "true" *)reg             deskew_found_q ;         //-- found a deskew block and thus have stuff in the buffer even if not locked
+reg             deskew_found_q ;         //-- found a deskew block and thus have stuff in the buffer even if not locked
 reg             deskew_locked_q;        //-- deskew locked with other lanes (normal operation)
 reg             valid_q        ;
 
@@ -321,7 +324,7 @@ wire            is_deskew_din;              //-- is a deskew block
 
 //wire [7:0]      data_flit_dlyd_din;
 
-(*mark_debug = "true" *)reg             is_deskew_q;
+reg             is_deskew_q;
 wire            found_pattern_a_din;
 reg             found_pattern_a_q;
 wire [7:0]      rx_tx_last_byte_ts3_din;
@@ -373,16 +376,22 @@ wire            EDPL_ready_din;
 wire  [63:0]  data_in_d1_din;
 wire  [63:0] data_in_d2_din;
 reg  [63:0]  data_in_d1_q;
-(*mark_debug = "true" *)reg  [63:0] data_in_d2_q;
+reg  [63:0] data_in_d2_q;
 wire         valid_in_d1_din;
 wire         valid_in_d2_din;
 reg          valid_in_d1_q;
-(*mark_debug = "true" *)reg          valid_in_d2_q;
+reg          valid_in_d2_q;
 
 wire [0:63] descrambled_data_raw_d1_din;
 wire [0:63]  descrambled_data_raw_d2_din;
 reg  [0:63] descrambled_data_raw_d1_q;
-(*mark_debug = "true" *)reg  [0:63]  descrambled_data_raw_d2_q;
+reg  [0:63]  descrambled_data_raw_d2_q;
+
+wire     lane_force_unlock_edge;
+   wire  lane_force_unlock_d;
+   reg   lane_force_unlock_q;
+   wire  lane_force_unlock_n1_d;
+   reg   lane_force_unlock_n1_q;
 
 //---------------------------------------- end declarations ------------------------------------------------
 //---------------------------------------- functions ------------------------------------------------
@@ -572,7 +581,7 @@ assign a_cntr_din[6:0] = ( (count_pattern_a_din & ~count_pattern_a_q) | reset ) 
                                                                                                    a_cntr_q[6:0];                  //-- default, including not valid, counter at limit -> maintain previous value
 
 assign b_cntr_din[6:0] = reset                                                                                           ? 7'b0000001 :                    //-- reset to 0 (the first B pattern doesn't get counted, so we are adding in the reset count
-                         (valid_in & count_pattern_b &  rcv_pattern_b & ~(b_cntr_q[3] & b_cntr_q[2]))                     ? (b_cntr_q[6:0] + 7'b0000001) :  //-- Allow B count to go to 12 before stopping so that if we miss a 'B' due to a bit flip, we can still find the synd
+                         (valid_in & count_pattern_b &  rcv_pattern_b & ~(b_cntr_q[3] & b_cntr_q[2]))                     ? (b_cntr_q[6:0] + 7'b0000001) :  //-- ljl 170810 Allow B count to go to 12 before stopping so that if we miss a 'B' due to a bit flip, we can still find the synd
                          (valid_in & count_pattern_b & (pattern_b_cntr_q[3:0] == 4'b0000) & (b_cntr_q[6:0]) != 7'b0000000) ? (b_cntr_q[6:0] - 7'b0000001) :  //-- didn't find pattern B recently enough and cntr>0 -> decrement counter
                                                                                                                              b_cntr_q[6:0];                 //-- default, including not valid, counter at limit -> maintain previous value
 
@@ -876,7 +885,7 @@ assign EDPL_parity_error = EDPL_ena & ~phy_training & ~training_enable &
                            
 //-- Only grab 6 most significant bits when counting to 64 or 128 errors.
 //-- At these thresholds, the actual count is 4*reported_count and can be off by up to +3. Otherwise, exact count is displayed.
-//-- e.g.: reported count = 6'b01_0010 = 18 --> Actual count is 72-75
+//-- EG: reported count = 6'b01_0010 = 18 --> Actual count is 72-75
 
 assign EDPL_max_cnt_out[7:0]      = EDPL_max_cnt_q[7:0];
 assign EDPL_error_out             = EDPL_error_q;
@@ -969,7 +978,11 @@ assign lfsr_lock = lfsr_running_q & (&(lfsr_cntr_din[0:2]));      //-- lock the 
 
 
 assign lfsr_unlock = ( lfsr_running_q & ~lfsr_locked_q & bad_ts_d2_q & bad_ts_d1_q )                 //-- second bad TS unlocks (trigger re-init)
-                     | slip | reset;                                                        //-- also unlock if slip to align header or reset
+                     | slip | reset | lane_force_unlock_edge;                                                        //-- also unlock if slip to align header or reset
+
+   assign lane_force_unlock_d = lane_force_unlock;
+   assign lane_force_unlock_n1_d = lane_force_unlock_q;
+   assign lane_force_unlock_edge = lane_force_unlock_q & ~lane_force_unlock_n1_q;
 
 assign lfsr_init_check = ~lfsr_running_q & data_aligned;        //-- re-init when have valid data and not already running (just unlocked)
 assign load_pattern1 = match_pattern1 & lfsr_init_check;        //-- load init value if we matched pattern 1 and are ready to re-init
@@ -1140,6 +1153,8 @@ EDPL_ready_q            <= EDPL_ready_din;
 deskew_sync_hdr_q[1:0]  <= deskew_sync_hdr_din[1:0];
 training_enable_dlyd_q  <= training_enable_dlyd_din;
 training_enable_dlyd2_q <= training_enable_dlyd2_din;
+lane_force_unlock_q     <= lane_force_unlock_d;
+lane_force_unlock_n1_q  <= lane_force_unlock_n1_d;
 end
 
 

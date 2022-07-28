@@ -113,6 +113,7 @@ parameter  GEMINI_NOT_APOLLO = 0
  ,degrade_to_inside              // < input
 
  ,opt_gckn                       // < input
+ ,lane_force_unlock
 //--  ,gnd                            // <> inout
 //--  ,vdn                            // <> inout
 );
@@ -208,6 +209,7 @@ output [7:0]      rx_tx_EDPL_thres_reached;
 input             x4OL_mode;
 input             force_degrade;
 input             degrade_to_inside;
+input [7:0]       lane_force_unlock;
 
 
 //-- inout gnd;
@@ -281,7 +283,7 @@ wire [63:0]     ln6_data;
 wire [63:0]     ln7_data;
 //-- from lanes
 wire [7:0]      data_flit;
-(*mark_debug = "true" *)wire [7:0]      deskew_valid;
+wire [7:0]      deskew_valid;
 wire [7:0]      deskew_overflow;
 
 wire            deskew_all_valid_l0;
@@ -353,7 +355,7 @@ ocx_dlx_rx_main #(.GEMINI_NOT_APOLLO(GEMINI_NOT_APOLLO)) main (
    ,.ln6_data           ( ln6_data )
    ,.ln7_data           ( ln7_data )
    ,.ctl_header         ( ctl_header[7:0] )
-   ,.data_flit          ( data_flit[7:0] )
+   ,.data_flit_raw      ( data_flit[7:0] )
    ,.disabled_lanes     ( tx_rx_disabled_rx_lanes )
    ,.cfg_transmit_order ( cfg_transmit_order )
    ,.EDPL_ena           ( EDPL_ena )
@@ -414,7 +416,7 @@ wire [7:0] found_sync;
 wire [7:0] find_a;
 wire [7:0] find_b;
 wire [7:0] find_first_b;
-(*mark_debug = "true" *)wire [7:0] valid_ln;
+wire [7:0] valid_ln;
 wire [7:0] slip_ln;
 //-------------------------------------------
 wire [63:0] data_ln0;
@@ -476,6 +478,7 @@ ocx_dlx_rx_lane lane0 (
    ,.EDPL_error_out     ( EDPL_error_out[0] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[0] )
    ,.EDPL_ready_out         ( EDPL_ready[0] )
+   ,.lane_force_unlock  ( lane_force_unlock[0] )
    
 
 //--    ,.gnd                ( gnd )
@@ -569,6 +572,7 @@ ocx_dlx_rx_lane lane1 (
    ,.EDPL_error_out     ( EDPL_error_out[1] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[1] )
    ,.EDPL_ready_out         ( EDPL_ready[1] )
+   ,.lane_force_unlock  ( lane_force_unlock[1] )
 		       
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )
@@ -660,6 +664,7 @@ ocx_dlx_rx_lane lane2 (
    ,.EDPL_error_out     ( EDPL_error_out[2] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[2] )
    ,.EDPL_ready_out         ( EDPL_ready[2] )
+   ,.lane_force_unlock  ( lane_force_unlock[2] )
 
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )
@@ -751,6 +756,7 @@ ocx_dlx_rx_lane lane3 (
    ,.EDPL_error_out     ( EDPL_error_out[3] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[3] )
    ,.EDPL_ready_out         ( EDPL_ready[3] )
+   ,.lane_force_unlock  ( lane_force_unlock[3] )
 
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )
@@ -842,6 +848,7 @@ ocx_dlx_rx_lane lane4 (
    ,.EDPL_error_out     ( EDPL_error_out[4] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[4] )
    ,.EDPL_ready_out         ( EDPL_ready[4] )
+   ,.lane_force_unlock  ( lane_force_unlock[4] )
 
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )
@@ -933,6 +940,7 @@ ocx_dlx_rx_lane lane5 (
    ,.EDPL_error_out     ( EDPL_error_out[5] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[5] )
    ,.EDPL_ready_out         ( EDPL_ready[5] )
+   ,.lane_force_unlock  ( lane_force_unlock[5] )
 
 
 //--    ,.gnd                ( gnd )
@@ -1025,6 +1033,7 @@ ocx_dlx_rx_lane lane6 (
    ,.EDPL_error_out     ( EDPL_error_out[6] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[6] )
    ,.EDPL_ready_out         ( EDPL_ready[6] )
+   ,.lane_force_unlock  ( lane_force_unlock[6] )
 
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )
@@ -1116,6 +1125,7 @@ ocx_dlx_rx_lane lane7 (
    ,.EDPL_error_out     ( EDPL_error_out[7] )
    ,.rx_tx_EDPL_thres_reached ( rx_tx_EDPL_thres_reached[7] )
    ,.EDPL_ready_out         ( EDPL_ready[7] )
+   ,.lane_force_unlock  ( lane_force_unlock[7] )
 
 //--    ,.gnd                ( gnd )
 //--    ,.vdn                ( vdn )

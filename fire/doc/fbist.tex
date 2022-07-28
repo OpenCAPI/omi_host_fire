@@ -1,0 +1,1509 @@
+\graphicspath{ {images/} }
+
+\section{Functional Built-In Self Test (FBIST)} \label{section_fbist}
+
+\subsection{Overview}
+FBIST, or Function Built-In Self Test, is the primary stress test for
+mainline reads and writes in Fire. It is conceptually based on the
+FBIST and MCBIST design of previous generation memory buffers,
+although, being on an FPGA, ``built-in'' is a misnomer. A user can
+program FBIST to provide a certain profile of traffic, balancing
+variables such as read/write balance, command spacing, and test
+length. Once FBIST is started, commands are sent to OCMB, and any
+reads are checked to ensure that correct data is returned. Writes are
+checked indirectly through subsequent reads. At the end of the test, a
+pass/fail bit is set, and any failing operations are logged for debug.
+
+The main principle that guides the design of FBIST is that all data is
+deterministically generated from the address and minimal
+meta-information. This allows for more flexibility in tests, as data
+written during the test can be read and checked at any later point
+without storing a prohibitive amount of expected data in Fire. There
+are five major blocks in FBIST. A command packet is assembled in a
+linear flow, as the control path flows only one direction, except for
+a single feedback path to stall the pipeline if needed. FBIST
+execution starts with the command generator, where an engine creates
+the sequence of commands to be executed. These commands then feed into
+an address generator, which attaches an address and a tag to each
+command. The data generator follows, which generates deterministic
+write data (if needed) based on the previous address. These commands,
+with address and data, are forwarded over the OpenCAPI link. The
+command and address are also stored in a lookup table (LUT). The data
+is not, because in order to save resources the data can be generated
+from the address in the future as needed. For writes, after the write
+response is received the command is marked complete. For reads, the
+data that was sent is regenerated and compared against the actual
+data.
+
+This chapter details these five blocks, which are shown in
+Figure~\ref{fig:fbist_overview}. In this figure, and other figures in
+this chapter, a cloud symbol indicates combinational logic that
+performs the function described by the text.
+
+Fire contains multiple, but identically configured, OpenCAPI
+ports. FBIST is designed to broadcast commands to all configured ports
+simultaneously. Each ports has independent checking
+logic. Additionally, to keep up with the bandwidth available on
+OpenCAPI, multiple commands are generated in parallel. On the other
+hand, data is only required once in a cycle, which is advantageous
+giving the wide data bus. Figure~\ref{fig:fbist_overview} contains
+four command and address generators, with one data generator, that
+broadcast to all OpenCAPI ports. Each OpenCAPI port has its own FIFO
+and upstream checker. Each pair of command and address generator is
+referred to as a ``pool'', which refers to the ability to divide the
+commands into completely independent or related groups as desired. For
+example, pools can be configured with disjoint address maps to allow
+each pool to access a different part of the address space. Each pool
+consists of a number of ``engines'' that allow for a mixture of
+commands in a pool. FBIST is designed to be able to keep up with a
+throughput of one command from each pool every cycle.
+
+\textbf{Note}: In the FBIST description, ``pseudo-random'' refers to an
+Linear Feedback Shift Register (LFSR) driven generator. The specifics
+vary between applications, but in general it means one of two things:
+a signal is asserted when a condition in the LFSR is met, or a signal
+vector takes the value of the subset of the LFSR. The length of an
+LFSR can be tuned depending on desired probability of an
+event. Importantly, while events driven from an LFSR appear
+``random'', they are in fact deterministic and repeatable (and even
+reversible). This allows apparently random tests to be run multiple
+times. Care is taken to ensure that all of FBIST is deterministic. The
+only possible source of arbitrary behavior is when we throttle all of
+FBIST to compensate for a channel replay. In this scenario, some
+commands will be out of sync as the FIFOs empty, although the commands
+and results will still be logically accurate. Eventually the channels
+will resync. When this occurs can be observed, but the specific timing
+will not be reproducible in general.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/fbist_overview.tex}
+  \end{center}
+  \caption[Overview of fbist\_rlm.vhdl]{\label{fig:fbist_overview}Overview of fbist\_rlm.vhdl
+  }
+\end{figure}
+
+\subsection{Interfaces}
+
+\subsection{Command Generator}
+The FBIST pipeline begins with the command generator. At this point,
+there is no address or data; only the command is generated. The
+command generator is made up of 3 major parts: command engine
+configuration, command arbitration, and command spacing. There are 4
+independent command generators in FBIST, one in each parallel
+pool. The command generator in each pool has 8 engines that are
+arbitrated between. This command generator is illustrated in
+Figure~\ref{fig:fbist_cgen}.
+
+A single command engine is programmed with a single command type that
+is static during test execution. Any variety of operations within a
+test is due to variation in commands programmed in different
+engines. For example, to achieve an (approximately) 60/40 mix of reads
+and writes, 60\% of the command engines should be programmed for
+reads, with the rest being programmed for writes. Primary focus in on
+reads and writes, but the interrupt command exists to allow custom
+code in the MicroBlaze to perform custom operations. This path allows
+a great deal of flexibility without relying on logic for operations
+that are not critical to performance, such as writes to configuration
+registers on either OCMB or the FPGA. It is also possible to disable a
+command engine. Valid commands are:
+\begin{itemize}
+  \item Read
+  \begin{itemize}
+    \item 128-Byte
+    \item 64-Byte
+    \item 32-Byte
+  \end{itemize}
+  \item Write
+  \begin{itemize}
+    \item 128-Byte
+    \item 64-Byte
+    \item 32-Byte
+  \end{itemize}
+  \item MicroBlaze Interrupt
+  \begin{itemize}
+    \item 8 bit interrupt ID for custom handling
+  \end{itemize}
+\end{itemize}
+
+Command arbitration chooses one command a cycle, selecting between the
+8 programmed commands. If a certain sequence of commands is required,
+the arbitration algorithm can work in a Round-Robin algorithm,
+selecting each engine sequentially. If more variety is required, it
+can also select in a pseudo-random order, using an LFSR with a
+programmed seed.
+
+The arbiter is throttled by the command spacing. The command spacing
+allows commands to be sent out at a certain rate. This rate can be
+fixed, sending a command every $X$ cycles, or pseudo-random in a
+programmed range, with either a uniform or geometric distribution.
+
+The MicroBlaze interrupts do not continue down the pipeline to the
+address generator. Rather, they leave the command generator and
+proceed directly to the MicroBlaze interrupt handling.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/fbist_cgen.tex}
+  \end{center}
+  \caption[Overview of fbist\_cgen.vhdl]{\label{fig:fbist_cgen}Overview of fbist\_cgen.vhdl
+  }
+\end{figure}
+
+\subsection{Address Generator}
+The Address Generator, shown in Figure~\ref{fig:fbist_agen} takes as
+inputs the command and the generating engine, as well as a valid, and
+generates an address and tag. The tag is used eventually as part of
+the AXI tag and CAPPTag, as well as being used as a key in the LUT to
+check results. Each engine in the command generator has a
+corresponding engine in the address generator, each with a unique
+configuration and state.
+
+Each address generator is programmed with a single address type that
+is static during test execution. This is related 1:1 with a command
+generator. An address can either be pseudo-random, or incrementing by
+a configurable constant. Additionally, the address can be ANDed or
+ORed with a programmable mask. This allows, for example, different
+commands to be performed in different areas of the memory, to prohibit
+address collisions, or hit a fixed address. Although OCMB can handle
+address collisions, the programming of these registers, especially in
+relation to each other, affects how often this happens. The 8 engines
+in a pool also use a common AND and OR mask, to allow configuration on
+a pool basis.
+
+The address generator also produces a tag, to be used as an
+identifying tag in the AXI transaction as well as the OpenCAPI
+transaction. This is arbitrary in both the FPGA and OCMB, and the
+actual value is not significant, serving only as an accounting
+method. Minimal configuration is provided for this. Each command that
+passes through the address generator increments the tag by 1. Each
+pool has a different mask that enables 1/4 of the total amount of tags
+available to FBIST. Once the counter is maxed out, it overflows back
+to 0. While it is possible that a tag can be reused while an operation
+to that tag is still pending, it is very unlikely this would happen.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/fbist_agen.tex}
+  \end{center}
+  \caption[Overview of fbist\_agen.vhdl]{\label{fig:fbist_agen}Overview of fbist\_agen.vhdl
+  }
+\end{figure}
+
+\subsection{Data Generator}
+The Data Generator, shown in Figure~\ref{fig:fbist_dgen}, uses an
+address to generate data for write commands. Read commands pass
+through unchanged. The tag, engine, and other values are not used when
+generating data, as these aren't necessarily the same when reading the
+generated data in the future. However, there are some mutations that
+can be programmed to be added to commands that modify the data. This
+ensures that the the data in memory is modified over time, rather than
+the same data being written again and again. The mutations are also
+used when mixing commands of different sizes to the same location.
+
+In general, what data is used doesn't fundamentally alter the behavior
+of a test. Data is data, and in practice not much behavior depends on
+it. For this reason, the data generator is less configurable than the
+command and address generators. Each pool is configured with a certain
+data mode, with each command in that pool using that method of
+generating data. Data generation modes are:
+\begin{itemize}
+  \item Random
+  \item Data Equals Address
+  \item All 0
+  \item All 1
+  \item Repeating 0xA, 0x5
+  \item Repeating 0xC, 0x3
+  \item Repeating 0xF, 0x0
+  \item User-Supplied Pattern
+\end{itemize}
+
+\subsection{FIFO and Flow Control}
+Everything described previously is generated and propagated downstream
+at a steady state. If FBIST is isolated, a valid command, with address
+and data, would be presented at the output of the data generator every
+cycle. However, when interfacing with the OpenCAPI link, this is not
+necessarily desired. The OpenCAPI layer adds some behavior that FBIST
+isn't aware of, such as handling of credits mixed in with commands and
+possible replays. Additionally, since FBIST broadcasts to all OpenCAPI
+ports on Fire, the behavior of one link affects the traffic to
+others. Thus, there is a FIFO between the output of the data generator
+and input to the OpenCAPI link. This absorbs any possible bubbles
+needed in the FBIST traffic, and also provides a clock gating signal
+to shutdown the FBIST pipeline when needed.
+
+The output of the FIFO is multiple AXI masters in parallel to talk to
+the TLT. In order to achieve the maximum bandwidth on the OpenCAPI
+link, FBIST needs to present multiple commands in a single cycle. This
+requires the AXI masters and slaves to work together, which is a
+requirement above the AXI spec. Additionally, the AXI spec is relaxed
+a bit in order to achieve back to back transactions. While this
+behavior is not part of the AXI spec, other AXI masters that do in
+fact abide by the spec can talk to the TLT, albeit with a slight
+decrease in latency.
+
+\subsection{Upstream Checker}
+The Upstream Checker, shown in Figure~\ref{fig:fbist_chk}, consists
+primarily of a LUT and a copy of the DGEN. The LUT stores the tags and
+addresses of outstanding OpenCAPI commands. When a response is
+received, these are removed from the LUT, checked, and either logged
+(for failure) or discarded (for success). For write commands, there is
+no way of checking the data directly; only the response itself is
+checked. For reads, we can check the response, as well as the returned
+data. Because data is deterministically generated from the address,
+after the command is removed from the LUT, we regenerate the expected
+data, and compare with the actual data. If there is a miscompare, it
+is not generally known if this is an issue with the read or the
+write. Further tests, or tracing on OCMB, would be needed to determine
+which operation failed.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/fbist_chk.tex}
+  \end{center}
+  \caption[Overview of fbist\_chk.vhdl]{\label{fig:fbist_chk}Overview of fbist\_chk.vhdl
+  }
+\end{figure}
+
+\subsection{Error Logging}
+Each checking failure generates an error object, which are stored in
+an array for later processing. If more error storage is needed, these
+error objects can be programmed to be stored out in the dedicated DDR4
+ISDIMM as well, although if the error rate is high enough it's
+possible that the ISDIMM memory controller will not keep up.
+
+Each error object consists of the following items (as space allows):
+\begin{itemize}
+  \item Command
+  \item Address
+  \item Tag
+  \item Generating Engine
+  \item Expected Data can be worked out from the tag ? TBD
+  \item Actual Data
+  \item Timestamp
+\end{itemize}
+
+The error array stores error information when FBIST detects a bad or
+invalid response to a read or write operation. The array can then be
+accessed by clean-up code 4 bytes at a time using only one address.
+Data is returned one quadbyte at a time
+sequentially by reads to the the FBIST\_ERROR\_ARRAY\_DATA register. Each error requires
+17 reads to assemble 68 bytes of information. The eighteenth read
+will return the LS 4 bytes of the second oldest error and so on.
+
+A second register supplies current read pointer information and the
+number of valid error entries in the array (max 63).
+
+Firmware can reset the array read pointer at any time by writing to
+a third error aray register.
+
+These regsters are described in the following subsection ("Registers").
+
+
+In addition to error objects, overall error and success counts can be
+observed.( - TBD ?)
+
+\subsection{Registers}
+
+\textbf{Note}: FBIST consists of multiple pools each with 3 engines.
+Each engine gets unique configuration registers. In the tables
+below, \$\{N\} enumerates through the configuration regsiters that are
+identical for each engine in a pool, with $0 \leq \$\{N\} < 8$.
+
+The following configurations available are a subset of what will be in
+the final design. A currently missing configuration option does not
+mean it won't be supported in the future.
+
+The register addresses aren't final, and will most likely be
+reorganized in the future. Any code written targeting these registers
+should be capable of remaining flexible.
+
+% FBIST Pool 0 Engine N
+\subsubsection{FBIST Pool 0 Engine \$\{N\}}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_\$\{N\}             \\
+  Address Offset & $4 * \$\{N\}$                               \\
+  VHDL Name      & fbist\_cfg.fbist\_cfg\_regs.reg\_\$\{N\}\_q \\ \hline
+
+  Description &
+  Address and Command configuration for Engine \$\{N\} in Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:16 & Reserved       & RW   & 0     &
+
+  Reserved 0. \\
+
+  15:8  & ADDRESS\_MODE  & RW   & 0     &
+
+  Addressing scheme to use when arbiter selects this engine.
+
+  \setlength\parindent{24pt}
+  \indent 0x00 : Constant Address                        \newline
+  \indent 0x01 : Increment by one address alignment unit \newline
+  \indent 0x02 : Decrement by one address alignment unit \newline
+  \indent 0x03 : Use state of a 42-bit LFSR              \newline
+  \indent All others Reserved                            \\
+
+  7:0   & COMMAND\_MODE  & RW   & 0     &
+
+  Command to send when arbiter selects this engine.
+
+  \setlength\parindent{24pt}
+  \indent 0x00 : No Operation   \newline
+  \indent 0x01 : 128 Byte Write \newline
+  \indent 0x02 : 64 Byte Write  \newline
+  \indent 0x03 : 32 Byte Write  \newline
+  \indent 0x04 : 128 Byte Read  \newline
+  \indent 0x05 : 64 Byte Read   \newline
+  \indent 0x06 : 32 Byte Read   \newline
+  \indent All others Reserved   \\
+\end{tabularx}
+
+% FBIST Pool 0 Spacing
+\subsubsection{FBIST Pool 0 Spacing}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_SPACING                 \\
+  Address Offset & \texttt{0x00020}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_08\_q \\ \hline
+
+  Description &
+  Spacing configuration for commands in a pool. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic  & Type & Reset & Description \\ \hline
+
+  31:20 & Reserved        & RW   & 0     &
+
+  Reserved 0. \\
+
+  19:16 & SPACING\_SCHEME & RW   & 0     &
+
+  Algorithm to use when spacing commands.
+
+  \setlength\parindent{24pt}
+  \indent 0x0 : Fixed Spacing \newline
+  \indent 0x1 : 18-bit LFSR   \newline
+  \indent All others Reserved \\
+
+  15:0  & SPACING\_COUNT  & RW   & 0     &
+
+  When in fixed spacing mode, this specifies the number of cycles to
+  wait between valid commands. When in 18-bit LFSR mode, bits 2:0
+  specify the number of sequential 1s in the least significant bits of
+  the LFSR that must be seen before sending a valid command, with
+  ``000'' meaning only the least significant bit must be '1', while
+  ``111'' means the 8 least significant bits must be '1'. A higher
+  value means commands are sent less frequently. In this mode, bits
+  15:3 are unused.\\
+\end{tabularx}
+
+% FBIST Pool 0 Arbiter
+\subsubsection{FBIST Pool 0 Arbiter}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ARB                     \\
+  Address Offset & \texttt{0x00024}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_09\_q \\ \hline
+
+  Description &
+  Abitration configuration for commands in a pool. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:4  & Reserved       & RW   & 0     &
+
+  Reserved 0. \\
+
+  3:0   & ARB\_SCHEME    & RW   & 0     &
+
+  Arbitration algorithm used for commands in a pool.
+
+  \setlength\parindent{24pt}
+  \indent 0x0 : Round Robin                     \newline
+  \indent 0x1 : Lowest 3 bits of a   6-bit LFSR \newline
+  \indent 0x2 : Lowest 3 bits of an 18-bit LFSR \newline
+  \indent All others Reserved                   \\
+\end{tabularx}
+
+% FBIST Pool 0 Status
+\subsubsection{FBIST Pool 0 Status}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATUS                  \\
+  Address Offset & \texttt{0x00028}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_0A\_q \\ \hline
+
+  Description &
+  FBIST execution status. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31    & STOP\_ON\_ERROR     & RW   & 0     &
+
+  FBIST will stop if there is an error. Any outstanding commands will
+  be completed, but no new commands will be generated. \\
+
+  30    & NO\_ERROR\_IF\_HANG & RW   & 0     &
+
+  If 1, no error is flagged if FBIST hangs. \\
+
+  29:4  & Reserved            & RW   & 0     &
+
+  Reserved 0. \\
+
+  3     & DONE                & RWX  & 0     &
+
+  Automatically set to 1 when hardware stops FBIST execution, such as
+  if there was an error with stop on error enabled. Write 0 to
+  clear. Not cleared automatically when a new run starts. \\
+
+  2     & IP                  & ROX  & 0     &
+
+  In progress. 1 when FBIST is running, 0 otherwise. \\
+
+  1     & STOP                & RWX  & 0     &
+
+  Write to 1 to stop execution. Self clears to 0. \\
+
+  0     & START               & RWX  & 0     &
+
+  Write to 1 to start execution. Self clears to 0. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine N Address Start Low
+\subsubsection{FBIST Pool 0 Engine \$\{N\} Address Start Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_\$\{N\}\_ADDRESS\_START\_LOW     \\
+  Address Offset & $4 * 2 * \$\{N\} + \texttt{0x2C}$                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_(0xB + 2 * \$\{N\})\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of the start address for Pool 0 Engine \$\{N\}. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & ADDRESS\_START\_LOW & RW   & 0     &
+
+  Bits 31:0 of the start address used for the address generation for
+  Engine \$\{N\} in Pool 0 in all address schemes. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine N Address Start High
+\subsubsection{FBIST Pool 0 Engine \$\{N\} Address Start High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_\$\{N\}\_ADDRESS\_START\_HIGH        \\
+  Address Offset & $4 * 2 * \$\{N\} + \texttt{0x30}$                            \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_(0xB + 2 * \$\{N\} + 1)\_q \\ \hline
+
+  Description &
+  Most significant 32 bits of the start address for Pool 0 Engine \$\{N\}. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & ADDRESS\_START\_HIGH & RW   & 0     &
+
+  Bits 63:32 of the start address used for the address generation for
+  Engine \$\{N\} in Pool 0 in all address schemes. \\
+\end{tabularx}
+
+% FBIST Pool 0 Address AND Mask Low
+\subsubsection{FBIST Pool 0 Address AND Mask Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ADDRESS\_AND\_MASK\_LOW \\
+  Address Offset & \texttt{0x0006C}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_1B\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of the AND mask address for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset      & Description \\ \hline
+
+  31:0  & ADDRESS\_AND\_MASK\_LOW & RW   & 0xFFFFFFFF &
+
+  Bits 31:0 of the AND mask address used for the address generation
+  for all engines in Pool 0. \\
+\end{tabularx}
+
+% FBIST Pool 0 Address AND Mask High
+\subsubsection{FBIST Pool 0 Address AND Mask High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ADDRESS\_AND\_MASK\_HIGH \\
+  Address Offset & \texttt{0x00070}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_1C\_q  \\ \hline
+
+  Description &
+  Least significant 32 bits of the AND mask address for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic           & Type & Reset      & Description \\ \hline
+
+  31:0  & ADDRESS\_AND\_MASK\_HIGH & RW   & 0xFFFFFFFF &
+
+  Bits 63:32 of the AND mask address used for the address generation
+  for all engines in Pool 0. \\
+\end{tabularx}
+
+% FBIST Pool 0 Address OR Mask Low
+\subsubsection{FBIST Pool 0 Address OR Mask Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ADDRESS\_OR\_MASK\_LOW  \\
+  Address Offset & \texttt{0x00074}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_1C\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of the OR mask address for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic         & Type & Reset & Description \\ \hline
+
+  31:0  & ADDRESS\_OR\_MASK\_LOW & RW   & 0     &
+
+  Bits 31:0 of the OR mask address used for the address generation
+  for all engines in Pool 0. \\
+\end{tabularx}
+
+% FBIST Pool 0 Address OR Mask High
+\subsubsection{FBIST Pool 0 Address OR Mask High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ADDRESS\_OR\_MASK\_HIGH \\
+  Address Offset & \texttt{0x00078}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_1D\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of the OR mask address for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset & Description \\ \hline
+
+  31:0  & ADDRESS\_OR\_MASK\_HIGH & RW   & 0     &
+
+  Bits 63:32 of the OR mask address used for the address generation
+  for all engines in Pool 0. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Reads
+\subsubsection{FBIST Pool 0 Stats Number of Reads}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_READS \\
+  Address Offset & \texttt{0x0007C}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_1F\_q  \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & NUM\_READS     & ROX  & 0     &
+
+  Number of reads done by Pool 0 during an FBIST run. This register is
+  automatically reset when a new FBIST run starts. This field contains
+  bits 31:0 of this value. Bits 47:32 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_READS\_WRITES\_EXTENDED. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Writes
+\subsubsection{FBIST Pool 0 Stats Number of Writes}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_WRITES \\
+  Address Offset & \texttt{0x00080}                          \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_20\_q   \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & NUM\_WRITES     & ROX  & 0     &
+
+  Number of writes done by Pool 0 during an FBIST run. This register
+  is automatically reset when a new FBIST run starts. This field
+  contains bits 31:0 of this value. Bits 47:32 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_READS\_WRITES\_EXTENDED. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Bytes Read
+\subsubsection{FBIST Pool 0 Stats Number of Bytes Read}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_READ \\
+  Address Offset & \texttt{0x00084}                               \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_21\_q        \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic   & Type & Reset & Description \\ \hline
+
+  31:0  & NUM\_BYTES\_READ & ROX  & 0     &
+
+  Number of 32-byte words read by Pool 0 during an FBIST run. This
+  register is automatically reset when a new FBIST run starts. This
+  field contains bits 31:0 of this value. Bits 47:32 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_READ\_WRITTEN\_EXTENDED. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Bytes Written
+\subsubsection{FBIST Pool 0 Stats Number of Bytes Written}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_WRITTEN \\
+  Address Offset & \texttt{0x00088}                                  \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_22\_q           \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & NUM\_BYTES\_WRITTEN & ROX  & 0     &
+
+  Number of 32-byte words written by Pool 0 during an FBIST run. This
+  register is automatically reset when a new FBIST run starts. This
+  field contains bits 31:0 of this value. Bits 47:32 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_READ\_WRITTEN\_EXTENDED. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Test Time
+\subsubsection{FBIST Pool 0 Test Time}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_TEST\_TIME       \\
+  Address Offset & \texttt{0x0008C}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_23\_q \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & TEST\_TIME     & ROX  & 0     &
+
+  Number of cycles an FBIST test runs for. This register is
+  automatically reset when a new FBIST run starts. This field contains
+  bits 31:0 of this value. Bits 47:32 are in
+  FBIST\_POOL\_0\_STATS\_TEST\_TIME\_EXTENDED. Among all the stats,
+  this counter increments the fastest and rolls over in about 8 days
+  at a 25.6 GHz link speed. \\
+\end{tabularx}
+
+% FBIST Error
+\subsubsection{FBIST Error}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_ERROR                            \\
+  Address Offset & \texttt{0x00090}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_24\_q \\ \hline
+
+  Description &
+  FBIST test error information. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic  & Type & Reset & Description \\ \hline
+
+  31:4  & Reserved        & RO   & 0     &
+
+  Reserved 0. \\
+
+  3     & HANG\_ERROR     & RW   & 0     &
+
+  If 1, FBIST has not seen a response in 2\textsuperscript{31} cycles and is
+  considered hung, which is an error condition. Not reset
+  automatically at start of test. \\
+
+  2     & Reserved        & RW  & 0     &
+
+  Reserved 0. \\
+
+  1     & MISMATCH\_ERROR & RW   & 0     &
+
+  If 1, FBIST has seen commands or data that don't match expected
+  values. Write to 0 to reset. Not reset automatically at start of
+  test. \\
+
+  0     & FBIST\_ERROR    & RW   & 0     &
+
+  If 1, FBIST has seen an error. The type of error can be determined
+  by the other bits in this register, at least one of which should be
+  set. Not reset automatically at start of test. \\
+\end{tabularx}
+
+% FBIST Pool 0 Data
+\subsubsection{FBIST Pool 0 Data}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_DATA                    \\
+  Address Offset & \texttt{0x00094}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_25\_q \\ \hline
+
+  Description &
+  FBIST data generation configuration. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:28 & ADDRMOD7\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x7. See ADDRMOD7\_DATA\_MODE for decode.
+
+  \setlength\parindent{24pt}
+  \indent 0x0 : Data Equals Address \newline
+  \indent 0x1 : All 0               \newline
+  \indent 0x2 : All 1               \newline
+  \indent 0x3 : Repeating 0xA       \newline
+  \indent 0x4 : Repeating 0xC       \newline
+  \indent 0x5 : Repeating 0x6       \newline
+  \indent 0x6 : Repeating 0xF0      \newline
+  \indent 0x7 : Reserved            \newline
+  \indent 0x8 : User Data 0         \newline
+  \indent 0x9 : User Data 1         \newline
+  \indent All others Reserved       \\
+
+  27:24 & ADDRMOD6\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x6. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  23:20 & ADDRMOD5\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x5. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  19:16 & ADDRMOD4\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x4. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  15:12 & ADDRMOD3\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x3. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  11:8  & ADDRMOD2\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x2. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  7:4   & ADDRMOD1\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x1. See ADDRMOD7\_DATA\_MODE for decode. \\
+
+  3:0   & ADDRMOD0\_DATA\_MODE & RW   & 0     &
+
+  Data generation mode for reads and write to addresses where OpenCAPI
+  PA(8:6) = 0x0. See ADDRMOD7\_DATA\_MODE for decode. \\
+\end{tabularx}
+
+% FBIST User Data 0 High
+\subsubsection{FBIST User Data 0 High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_USER\_DATA\_0\_HIGH              \\
+  Address Offset & \texttt{0x00098}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_26\_q \\ \hline
+
+  Description &
+  Most significant 32 bits of User Data 0 used in data generation. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & USER\_DATA\_0\_HIGH & RW   & 0     &
+
+  Bits 63:32 of User Data 0 used in data generation when selecting the
+  User Data 0 data generation mode. \\
+\end{tabularx}
+
+% FBIST User Data 0 Low
+\subsubsection{FBIST User Data 0 Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_USER\_DATA\_0\_LOW              \\
+  Address Offset & \texttt{0x0009C}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_27\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of User Data 0 used in data generation. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic     & Type & Reset & Description \\ \hline
+
+  31:0  & USER\_DATA\_0\_LOW & RW   & 0     &
+
+  Bits 31:0 of User Data 0 used in data generation when selecting the
+  User Data 0 data generation mode. \\
+\end{tabularx}
+
+% FBIST User Data 1 High
+\subsubsection{FBIST User Data 1 High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_USER\_DATA\_1\_HIGH              \\
+  Address Offset & \texttt{0x000A0}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_28\_q \\ \hline
+
+  Description &
+  Most significant 32 bits of User Data 1 used in data generation. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & USER\_DATA\_1\_HIGH & RW   & 0     &
+
+  Bits 63:32 of User Data 1 used in data generation when selecting the
+  User Data 1 data generation mode. \\
+\end{tabularx}
+
+% FBIST User Data 1 Low
+\subsubsection{FBIST User Data 1 Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_USER\_DATA\_1\_LOW              \\
+  Address Offset & \texttt{0x000A4}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_29\_q \\ \hline
+
+  Description &
+  Least significant 32 bits of User Data 1 used in data generation. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic     & Type & Reset & Description \\ \hline
+
+  31:0  & USER\_DATA\_1\_LOW & RW   & 0     &
+
+  Bits 31:0 of User Data 1 used in data generation when selecting the
+  User Data 1 data generation mode. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Reads Writes Extended
+\subsubsection{FBIST Pool 0 Stats Number of Reads Writes Extended}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_READ\_WRITES\_EXTENDED \\
+  Address Offset & \texttt{0x000A8}                                          \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2A\_q                   \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic   & Type & Reset & Description \\ \hline
+
+  31:16 & NUM\_WRITES\_EXT & ROX  & 0     &
+
+  Number of writes done by Pool 0 during an FBIST run. This register is
+  automatically reset when a new FBIST run starts. This field contains
+  bits 47:32 of this value. Bits 31:0 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_WRITES. \\
+
+  15:0  & NUM\_READS\_EXT  & ROX  & 0     &
+
+  Number of reads done by Pool 0 during an FBIST run. This register is
+  automatically reset when a new FBIST run starts. This field contains
+  bits 47:32 of this value. Bits 31:0 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_READS. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Number of Bytes Read Written Extended
+\subsubsection{FBIST Pool 0 Stats Number of Bytes Read Written Extended}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_READ\_WRITTEN\_EXTENDED \\
+  Address Offset & \texttt{0x000AC}                                                  \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2B\_q                           \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic           & Type & Reset & Description \\ \hline
+
+  31:16 & NUM\_BYTES\_WRITTEN\_EXT & ROX  & 0     &
+
+  Number of 32-byte words read by Pool 0 during an FBIST run. This
+  register is automatically reset when a new FBIST run starts. This
+  field contains bits 47:32 of this value. Bits 31:0 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_WRITTEN. \\
+
+  15:0  & NUM\_BYTES\_READ\_EXT    & ROX  & 0     &
+
+  Number of 32-byte words read by Pool 0 during an FBIST run. This
+  register is automatically reset when a new FBIST run starts. This
+  field contains bits 47:32 of this value. Bits 31:0 are in
+  FBIST\_POOL\_0\_STATS\_NUMBER\_OF\_BYTES\_READ. \\
+\end{tabularx}
+
+% FBIST Pool 0 Stats Test Time Extended
+\subsubsection{FBIST Pool 0 Stats Test Time Extended}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_STATS\_TEST\_TIME\_EXTENDED \\
+  Address Offset & \texttt{0x000B0}                            \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2C\_q     \\ \hline
+
+  Description &
+  Command statistics for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic  & Type & Reset & Description \\ \hline
+
+  31:16 & Reserved        & RO   & 0     &
+
+  Reserved 0. \\
+
+  15:0  & TEST\_TIME\_EXT & ROX  & 0     &
+
+  Number of cycles an FBIST test runs for. This register is
+  automatically reset when a new FBIST run starts. This field contains
+  bits 47:32 of this value. Bits 31:0 are in
+  FBIST\_POOL\_0\_STATS\_TEST\_TIME. Among all the stats, this counter
+  increments the fastest and rolls over in about 8 days at a 25.6 GHz
+  link speed. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 0 Latency Low
+\subsubsection{FBIST Pool 0 Engine 0 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_0\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000B4}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2D\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 0 Latency High
+\subsubsection{FBIST Pool 0 Engine 0 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_0\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000B8}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2E\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 1 Latency Low
+\subsubsection{FBIST Pool 0 Engine 1 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_1\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000BC}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_2F\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST ERROR ARRAY ENTRIES          }
+\subsubsection{FBIST Error Array Data  }
+
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_ERROR\_ARRAY\_DATA      \\
+  Address Offset & \texttt{0x000C0}               \\
+  VHDL Name      & fbist\_fes\_buffer.exp\_rd\_data \\ \hline
+
+  Description &
+  This register is read repeatedly, 17 times per error, each read supplies
+  four bytes of an error entry. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & error\_snapshot\_data       & RO   & X     &  first read gives LS 4 bytes \newline
+  of received data ..... \\
+  31:0  & error\_snapshot\_data    & RO   & X     & ....  subsequent 15 reads give the remaining
+  bytes of the 64B data returned if a read.\\
+  31:24  & error\_snapshot       & RO   & X     &  (mod seventeen reads)  \newline
+  \setlength\parindent{24pt}
+  \indent 0x01 : good write response \newline
+  \indent 0x02 : bad  write response \newline
+  \indent 0x03 : good read response \newline
+  \indent 0x04 : bad  read response \\
+  23:20  & error\_snapshot\_engine & RO   & X  &  (mod seventeen reads)  \newline
+  fbist engine \\
+  19:4   & error\_snapshot\_tag & RO   & X     &  (mod seventeen reads)  \newline
+  actual and expected capptag. \\
+  3:2   & error\_snapshot\_dp & RO   & X     &  (mod seventeen reads)  \newline
+  OpenCAPI dpart. \\
+  1    & error\_snapshot\_ow & RO   & X     &  (mod seventeen reads)  \newline
+  OpenCAPI OW. \\
+  0   & error\_snapshot\_dmisc & RO   & X     &  (mod seventeen reads) \newline
+  '1' for data compare error, else '0'. \\
+\end{tabularx}
+
+% FBIST ERROR ARRAY INFO
+\subsubsection{FBIST Error Array Info }
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_ERROR\_ARRAY\_INFO        \\
+  Address Offset & \texttt{0x000C4}                 \\
+  VHDL Name      & fbist\_fes\_buffer.exp\_rd\_info \\ \hline
+
+  Description &
+  This register supplies information about the Error Array
+  pointers. These pointers are reset by hardware when fbist starts. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic               & Type & Reset & Description \\ \hline
+
+  31:24 & error\_array\_valid\_samples & RO   & 0     &
+
+  The number of valid samples in the array \\
+
+  23:16 & Reserved                     & RO   & 0x00  &
+
+  Reserved 0. \\
+
+  15:8  & error\_current\_sample       & RO   & 0     &
+
+  The current sample returned when FBIST\_ERROR\_ARRAY\_DATA register
+  is read. \\
+
+  7:0   & error\_current\_qw           & RO   & 0     &
+
+  The quadbyte of the current sample returned when
+  FBIST\_ERROR\_ARRAY\_DATA register is read. \\
+\end{tabularx}
+
+% FBIST ERROR ARRAY RESET
+\subsubsection{FBIST Error Array Reset}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_ERROR\_ARRAY\_INFO      \\
+  Address Offset & \texttt{0x000C8}               \\
+  VHDL Name      & fbist\_fes\_buffer.reset\_rptr \\ \hline
+
+  Description &
+  Any write to this register will reset the read pointers used in the
+  error array logic. Immediately following a write to this register a
+  read of the FBIST\_ERROR\_ARRAY\_DATA register will return the first
+  4 bytes of the oldest sample in the array. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic            & Type & Reset & Description \\ \hline
+
+  31:0  & error\_array\_reset\_rptr & WO   & -     &
+
+  The data is not used for anything and is don't care. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 1 Latency High
+\subsubsection{FBIST Pool 0 Engine 1 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_1\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000CC}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_33\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 2 Latency Low
+\subsubsection{FBIST Pool 0 Engine 2 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_2\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000D0}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_34\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 2 Latency High
+\subsubsection{FBIST Pool 0 Engine 2 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_2\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000D4}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_35\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 3 Latency Low
+\subsubsection{FBIST Pool 0 Engine 3 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_3\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000D8}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_36\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 3 Latency High
+\subsubsection{FBIST Pool 0 Engine 3 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_3\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000DC}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_37\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 4 Latency Low
+\subsubsection{FBIST Pool 0 Engine 4 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_4\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000E0}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_38\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 4 Latency High
+\subsubsection{FBIST Pool 0 Engine 4 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_4\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000E4}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_39\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 5 Latency Low
+\subsubsection{FBIST Pool 0 Engine 5 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_5\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000E8}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3A\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 5 Latency High
+\subsubsection{FBIST Pool 0 Engine 5 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_5\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000EC}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3B\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 6 Latency Low
+\subsubsection{FBIST Pool 0 Engine 6 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_6\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000F0}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3C\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 6 Latency High
+\subsubsection{FBIST Pool 0 Engine 6 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_6\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000F4}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3D\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 7 Latency Low
+\subsubsection{FBIST Pool 0 Engine 7 Latency Low}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_7\_LATENCY\_LOW \\
+  Address Offset & \texttt{0x000F8}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3E\_q \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_LOW & ROX  & 0     &
+
+  Bits 31:0 of the total latency for all commands for this engine. The
+  latency for a single command is measure from when the command was
+  inserted into the LUT while being dispatched to when it was read
+  from the LUT to be checked. The average latency is the total latency
+  divided by the number of responses. \\
+\end{tabularx}
+
+% FBIST Pool 0 Engine 7 Latency High
+\subsubsection{FBIST Pool 0 Engine 7 Latency High}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_ENGINE\_7\_LATENCY\_HIGH \\
+  Address Offset & \texttt{0x000FC}                         \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_3F\_q  \\ \hline
+
+  Description &
+  Latency calculations for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic       & Type & Reset & Description \\ \hline
+
+  31:0  & TOTAL\_LATENCY\_HIGH & ROX  & 0     &
+
+  Bits 63:32 of the total latency for all commands for this engine,
+  continue from the corresponding TOTAL\_LATENCY\_LOW. \\
+\end{tabularx}
+
+% FBIST Pool 0 Inject
+\subsubsection{FBIST Pool 0 Inject}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FBIST\_POOL\_0\_INJECT                  \\
+  Address Offset & \texttt{0x00100}                        \\
+  VHDL Name      &  fbist\_cfg.fbist\_cfg\_regs.reg\_40\_q \\ \hline
+
+  Description &
+  Error injections for Pool 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit  & Field Mnemonic          & Type & Reset & Description \\ \hline
+
+  31:4 & Reserved                & RO   & 0     &
+
+  Reserved 0. \\
+
+  3    & ADDRESS\_INJECT\_ENABLE & RW   & 0     &
+
+  Set to 1 to force OpenCAPI PA bit 0 to flip on the next FBIST read
+  or write command dispatched. This will lead to a misaligned address
+  sent to the endpoint, and a fail response. Toggle to reinject on
+  future commands. \\
+
+  2    & ADDRESS\_INJECT\_DONE   & RWX  & 0     &
+
+  Set to 1 to when an address error was successfully injected. Write
+  to 0 to clear. Not automatically cleared by hardware. \\
+
+  1    & DATA\_INJECT\_ENABLE    & RW   & 0     &
+
+  Set to 1 to force OpenCAPI Data bit 0 to flip on the next FBIST
+  write command dispatched. This will lead to a miscompare when
+  checking subsequent reads to the same location. Toggle to reinject
+  on future commands. \\
+
+  0    & DATA\_INJECT\_ENABLE    & RWX  & 0     &
+
+  Set to 1 to when a data error was successfully injected. Write to 0
+  to clear. Not automatically cleared by hardware. \\
+\end{tabularx}

@@ -99,11 +99,14 @@ parameter GEMINI_NOT_APOLLO = 0
     ,x8_degrade_to_inside                 // -- < input
     ,x4_degrade_to_outside                // -- < input
     ,x4_degrade_to_inside                 // -- < input
+    ,dl_manual_training_state             // -- < input
+    
     ,ltch_lane_cfg                        // -- > output
 
 //--     ,gnd                                  // -- <> inout
 //--     ,vdn                                  // -- <> inout
-    ,dlx_clk                              // -- <  input  
+    ,dlx_clk                              // -- <  input
+    ,dl_debug_vector
     );
 
     input         rx_tx_tx_lane_swap;
@@ -114,10 +117,10 @@ parameter GEMINI_NOT_APOLLO = 0
     input  [7:0]  rx_tx_pattern_a;
     input  [7:0]  rx_tx_pattern_b;
     input  [7:0]  rx_tx_sync;
-    input  [7:0]  rx_tx_TS1;
-    input  [7:0]  rx_tx_TS2;
-    input  [7:0]  rx_tx_TS3;
-    input  [7:0]  rx_tx_block_lock;
+     input  [7:0]  rx_tx_TS1;
+     input  [7:0]  rx_tx_TS2;
+     input  [7:0]  rx_tx_TS3;
+     input  [7:0]  rx_tx_block_lock;
     input         rx_tx_deskew_done;
     input         rx_tx_linkup;
     input  [7:0]  ln0_rx_tx_last_byte_ts3;
@@ -184,6 +187,8 @@ parameter GEMINI_NOT_APOLLO = 0
     input  x8_degrade_to_inside;
     input  x4_degrade_to_outside;
     input  x4_degrade_to_inside;
+    input [3:0] dl_manual_training_state;
+    output [127:0]     dl_debug_vector;
    
 //--     inout gnd;
 
@@ -834,16 +839,16 @@ end
 endfunction
 
     wire [2:0]   tsm_din;
-    (*mark_debug = "true"*) (*keep = "true"*)reg  [2:0]   tsm_q = 3'b110;
+    (* mark_debug = "TRUE" *)  reg  [2:0]   tsm_q = 3'b110;
     wire [7:0]   good_tx_lanes_din;
     reg [2:0]   tsm_int;
     reg  [7:0]   good_tx_lanes_q;
     wire [8:0]   seq_cnt_din;
     reg  [8:0]   seq_cnt_q; 
     wire [3:0]   a_cnt_din;
- (*mark_debug = "true"*)   reg  [3:0]   a_cnt_q;
+    reg  [3:0]   a_cnt_q;
     wire [3:0]   b_cnt_din;
-  (*mark_debug = "true"*)  reg  [3:0]   b_cnt_q;
+    reg  [3:0]   b_cnt_q;
     wire [9:0]   timer_din;
     reg  [9:0]   timer_q;
     wire [0:22]  lfsr_din;
@@ -855,7 +860,7 @@ endfunction
     wire         det_sync_din;
     reg          det_sync_q;
     wire         flt_ready_din;
- (*mark_debug = "true"*)   reg          flt_ready_q;
+    reg          flt_ready_q;
     wire         good_tx_outsides_din;
     reg          good_tx_outsides_q;
     wire         good_tx_insides_din;
@@ -883,26 +888,26 @@ endfunction
     reg          reset_d1_q; 
     wire         reset_d1_din;
     wire         start_train;
- (*mark_debug = "true"*)   reg          start_retrain_q; 
+    reg          start_retrain_q; 
     wire         start_retrain_din;
     reg [2:0]    start_retrain_dly_q;
     wire [2:0]   start_retrain_dly_din;
     
 
-    wire         pat_a_done;
-    wire         pat_b_done;
-    wire         sync_done;
-    wire         ts1_done;
-    wire         ts2_done;
-    wire         ts3_done;
-    wire         ts4_done;
-    wire         block_locked;
+    (* mark_debug = "TRUE" *) wire         pat_a_done;
+    (* mark_debug = "TRUE" *) wire         pat_b_done;
+    (* mark_debug = "TRUE" *) wire         sync_done;
+    (* mark_debug = "TRUE" *) wire         ts1_done;
+    (* mark_debug = "TRUE" *) wire         ts2_done;
+    (* mark_debug = "TRUE" *) wire         ts3_done;
+    (* mark_debug = "TRUE" *) wire         ts4_done;
+    (* mark_debug = "TRUE" *) wire         block_locked;
 
- (*mark_debug = "true"*)   reg         ts1_done_q;
-  (*mark_debug = "true"*)  reg         ts2_done_q;
-   (*mark_debug = "true"*) reg         ts3_done_q;
-    (*mark_debug = "true"*)reg         ts4_done_q;
-    (*mark_debug = "true"*) reg        block_locked_q;
+    reg         ts1_done_q;
+    reg         ts2_done_q;
+    reg         ts3_done_q;
+    reg         ts4_done_q;
+     reg        block_locked_q;
 
     wire         tsm_advance;
     wire         tpulse;
@@ -954,8 +959,7 @@ endfunction
     wire         EDPL_window_hit;
     reg [2:0]    retrain_pending_q;
     wire [2:0]   retrain_pending_din;
-    // Preserve this register so we can use it to inject randomn timing constraints into Vivado runs. 
-   (* dont_touch = "yes" *)
+    // Preserve this register so we can use it to inject randomn timing constraints into Vivado runs.  2/20/2018   mfred
     reg   [31:0] dlx_version_q;
     wire [5:0]   dl_deskew_version;
     reg          tick_1us_q;
@@ -963,6 +967,10 @@ endfunction
     reg [8:0]    tick_1us_cntr_q;
     wire [8:0]   tick_1us_cntr_din;
     wire [7:0]   mask_pattern_a, mask_pattern_b;
+    wire [3:0]   dl_manual_training_state_d;
+    reg  [3:0]   dl_manual_training_state_q;
+    wire [1:0]   tsm_advance_d;
+    reg  [1:0]   tsm_advance_q;
 
     //-- read only variable via config memory: DVSEC
     assign dlx_version_din[31:0] = `DLX_VERSION_NUMBER;
@@ -1049,13 +1057,27 @@ begin
       endcase
 end
 
-    assign tsm_din[2:0] = reset_q ? 3'b110 : tsm_int[2:0];
+    assign tsm_din[2:0] = reset_q                        ? 3'b110                          :
+                          ~dl_manual_training_state_d[3] ? dl_manual_training_state_d[2:0] :
+                                                           tsm_int[2:0];
+
+    // Only allow a manual state change in the regular cadence. Use
+    // the _d values above to tsm_din to change the cycle it normally
+    // would, rather than one cycle later.
+    assign dl_manual_training_state_d = reset_q     ? 3'b110                     :
+                                        tsm_advance ? dl_manual_training_state   :
+                                                      dl_manual_training_state_q;
+
+   assign tsm_advance_d[1:0]      = tsm_q == 3'b001 ? 2'b00 :
+                                    tsm_advance     ? tsm_advance_q + 2'b01 :
+                                                      tsm_advance_q;
+
     assign ltch_lane_cfg = (tsm_q[2:0] != 3'b100) && (tsm_int[2:0] == 3'b100);
 //-- wait for a lot of pattern a's, this is so the transeiver has a chance to lock on all lanes
     assign pat_a_done              = tsm_advance & |(a_cnt_q[3:0]);
-    assign pat_b_done              = tsm_advance & (det_sync_q | (b_cnt_q[3] & b_cnt_q[2]));        //-- only need 16, but there are alignment cases, so send ~20
+    assign pat_b_done              = tsm_advance_q[1] & (det_sync_q | (b_cnt_q[3] & b_cnt_q[2]));        //-- only need 16, but there are alignment cases, so send ~20
 //--    assign sync_done               = (tsm_advance &  det_sync_q);
-    assign sync_done               = (tsm_advance &  (tsm_q[2:0] == 3'b011));
+    assign sync_done               = (tsm_advance &  (tsm_q[2:0] == 3'b011));  //-- ljl 10/18/2017.
     assign ts1_done                = ((rx_tx_TS1[7:0]        | disabled_rx_lanes_q[7:0]) == 8'b11111111) | ((rx_tx_TS2[7:0]  | disabled_rx_lanes_q[7:0]) == 8'b11111111);
     assign ts2_done                = ((rx_tx_TS2[7:0]        | disabled_rx_lanes_q[7:0]) == 8'b11111111) | ((rx_tx_TS3[7:0]  | disabled_rx_lanes_q[7:0]) == 8'b11111111);
     assign ts3_done                = (((rx_tx_TS3[7:0]       | disabled_rx_lanes_q[7:0]) == 8'b11111111) );
@@ -1197,6 +1219,7 @@ end
     assign x2_tx_mode_din = ((good_tx_insides_q & ~good_tx_outsides_q) | (~good_tx_insides_q & good_tx_outsides_q)) & (x4_degrade_to_inside | x4_degrade_to_outside);                                         
                                          
 //--  this needs to run at full speed for either mode
+//-- this causes other issues... don't do it    assign ctl_gb_seq_int[6:0]         = x4_not_x8_tx_mux_lock_din ? seq_cnt_q[6:0]:
     assign ctl_gb_seq_int[6:0] = x2_tx_mode_q & ~ctl_gb_train_int        ? seq_cnt_q[6:0]:
                                  x4_not_x8_tx_mode_q & ~ctl_gb_train_int ? seq_cnt_q[7:1]:
                                                                            seq_cnt_q[8:2];
@@ -1330,7 +1353,7 @@ assign EDPL_timer_din[43:0]   =  EDPL_timer_reset  ? 44'b0 :
                                                      EDPL_timer_q[43:0];
 
 //-- error signal
-assign EDPL_thres_reached_din       = (|rx_tx_EDPL_thres_reached[7:0]);
+assign EDPL_thres_reached_din       = (|(rx_tx_EDPL_thres_reached[7:0] & ~disabled_rx_lanes_q[7:0]));
 //-- wait until retrain launches to kill the correct lane
 assign EDPL_kill_lane_pend_din[7:0] = (EDPL_kill_lane_pend_q[7:0] | rx_tx_EDPL_thres_reached[7:0]) & {8{~reset_q}};
 assign EDPL_bad_lane_din[7:0]       = (({8{start_retrain_q | start_retrain_dly_q[2]}} & EDPL_kill_lane_pend_q[7:0]) | EDPL_bad_lane_q[7:0]) &
@@ -1342,7 +1365,19 @@ assign ctl_reg_hwwe = EDPL_max_cnt_reset;
 
 assign retrain_pending_din[2:1] = retrain_pending_q[1:0];
 assign retrain_pending_din[0] = &{tsm_q[2:0],EDPL_thres_reached_q};
-                        
+
+   // Debug
+   assign dl_debug_vector[2:0] = tsm_q;
+   assign dl_debug_vector[3] = rx_tx_linkup;
+   assign dl_debug_vector[11:4] = rx_tx_pattern_a;
+   assign dl_debug_vector[19:12] = rx_tx_pattern_b;
+   assign dl_debug_vector[27:20] = rx_tx_sync;
+   assign dl_debug_vector[35:28] = rx_tx_block_lock;
+   assign dl_debug_vector[43:36] = rx_tx_deskew_done;
+   assign dl_debug_vector[51:44] = rx_tx_TS1;
+   assign dl_debug_vector[59:52] = rx_tx_TS2;
+   assign dl_debug_vector[67:60] = rx_tx_TS3;
+   assign dl_debug_vector[127:68] = 60'b0; // Reserved for expansion
 
 // ----------------------- end of EDPL logic --------------------------------
 
@@ -1394,6 +1429,9 @@ always @(posedge (dlx_clk)) begin
    ts3_done_q			 <= ts3_done;
    ts4_done_q			 <= ts4_done;
    block_locked_q                <= block_locked;
+   dl_manual_training_state_q    <= dl_manual_training_state_d;
+   tsm_advance_q                 <= tsm_advance_d;
+//--   x4_not_x8_tx_mux_lock_q       <= x4_not_x8_tx_mux_lock_din;
 
 end
 

@@ -10,11 +10,11 @@ set -eu
 cd $(dirname "$(readlink -f "$0")")
 
 # Grab 28 bits of hash
-SHORT_HASH=$(/opt/xsite/cte/tools/git/latest/bin/git rev-parse --short=7 HEAD)
+SHORT_HASH=$(git rev-parse --short=7 HEAD)
 echo -n "Writing meta files for commit ${SHORT_HASH}"
 
 # Check if there are any modified or staged files
-if ! /opt/xsite/cte/tools/git/latest/bin/git diff-index --quiet HEAD --; then
+if ! git diff-index --quiet HEAD --; then
     DIRTY=1
     echo "-dirty"
 else
@@ -56,16 +56,10 @@ VHDL_HEADER="-- ${HEADER_TEXT}"
 # own line in the for loop to make diffs look good.
 echo
 for file in \
-    ../vhdl/meta_pkg.vhdl \
+    ../fire/src/vhdl/meta_pkg.vhdl \
     ; do
     echo "${VHDL_HEADER}" > $file
     echo "${META_REGISTER_VHDL_CONSTANT}" >> $file
     echo "Updated ${file}"
 done
 
-for file in \
-    ; do
-    echo "${VERILOG_HEADER}" > $file
-    echo "${META_REGISTER_VERILOG_DEFINE}" >> $file
-    echo "Updated ${file}"
-done

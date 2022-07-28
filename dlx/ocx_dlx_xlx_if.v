@@ -115,7 +115,7 @@ parameter [2:0] hold_pulse       = 3'b001; // Holds the Xilinx transceiver's rec
 parameter [2:0] pulse_done       = 3'b010; // Transitions the Xilinx transceiver's receiver reset signal to low. 
 reg       [2:0] pulse_count_q    ;
 wire      [2:0] pulse_count_din; 
-reg       [2:0] xtsm_q           ;
+(* mark_debug = "TRUE" *) reg       [2:0] xtsm_q           ;
 reg       [2:0] xtsm_din         ;
 
 assign gtwiz_reset_rx_datapath_out = (xtsm_q == hold_pulse) ? 1'b1 : 1'b0;                                    
@@ -126,6 +126,7 @@ assign pulse_count_din[2:0]        = (xtsm_q == find_sync)  ? 3'b000            
  
 
 // Reset Xilinx Transceiver's receiver state machine after sync pattern is detected and need to recenter eye at faster data rate                                                 
+//--jda 5/17 always @ (opt_gckn)
 always @ (*)
 begin
       case (xtsm_q[2:0])
@@ -161,7 +162,7 @@ end
 
 //assign dlx_reset = ~(gtwiz_reset_tx_done_in & gtwiz_buffbypass_tx_done_in); // Hold DLx in reset until transceiver transmitter is ready
 reg   rec_first_xtsm_q   ;
-reg   rec_first_xtsm_din ;
+(* mark_debug = "TRUE" *) reg   rec_first_xtsm_din ;
 
 
 assign dlx_reset = (send_first)                ? ~(gtwiz_reset_tx_done_in & gtwiz_buffbypass_tx_done_in) :

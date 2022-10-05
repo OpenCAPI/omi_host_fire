@@ -1,0 +1,511 @@
+\graphicspath{ {images/} }
+
+\section{OpenCAPI Command and Configure Sequencer (C3S)} \label{section_c3s}
+
+\subsection{Overview}
+The OpenCAPI Command and Configure Sequencer (C3S) is a set of
+controls capable of stepping and looping through a configurable array
+of commands. This provides a simple and flexible method of driving any
+interface, which can be useful for debugging and testing as well as
+initialization. Unlike a functional exerciser, C3S is exclusively a
+transmitter, and can't react to any responses, such as
+handshakes. While these responses can have no functional purpose, they
+are captured for later manual analysis.
+
+C3S is designed to provide a core architecture with a command array of
+configurable width and depth in order to allow reuse in multiple
+applications. The logic block produces a command vector and a select
+signal as outputs. Each application will use this command vector as
+desired, and the select signal can be used to select C3S traffic
+instead of normal functional traffic.
+
+The core C3S macro consists of five parts: a data array to store the
+C3S instructions sent, an instruction flow array that holds the
+control instructions such as loop count and next instruction, a
+response array to capture any responses for future analysis,
+configuration registers to hold control information and AXI-Lite
+slave, and the control block with the central state machine. This
+chapter details these five generic blocks, which are shown in
+Figure~\ref{fig:c3s_overview}. Additionally, later sections explain
+specific applications of C3S in the Apollo FPGA and how the core
+architecture is implemented in each case.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/c3s_overview.tex}
+  \end{center}
+  \caption[Overview of c3s\_rlm.vhdl]{\label{fig:c3s_overview}Overview of c3s\_rlm.vhdl
+  }
+\end{figure}
+
+\subsection{Interfaces}
+VHDL Name: c3s\_rlm (c3s\_rlm.vhdl)
+
+\subsubsection{Generics}
+\begin{center}
+  \begin{tabular}{ l | c | c | c | c | p{.3\linewidth} }
+    Generic Name      & Type     & Min & Max  & Default & Description \\
+    \hline
+    C\_COMMAND\_WIDTH & Positive & 1   & 8192 & 512     & Number of bits in command driven by C3S. A multiple of 32 is required for efficient implementation. \\
+    \hline
+    C\_ADDRESS\_WIDTH & Positive & 1   & 8    & 5       & Command array will contain 2\textsuperscript{C\_ADDRESS\_WIDTH} commands. \\
+  \end{tabular}
+\end{center}
+
+\subsubsection{Ports}
+\begin{center}
+  \begin{tabular}{ l | c | c | p{.3\linewidth} }
+    Signal Name          & I/O & Size              & Description \\
+    \hline
+    \multicolumn{4}{c}{Clocking} \\
+    \hline
+    clock                & I   & 1                 & Positive clock \\
+    \hline
+    reset                & I   & 1                 & Active-high reset \\
+    \hline
+    \multicolumn{4}{c}{Command} \\
+    \hline
+    c3s\_command         & O   & C\_COMMAND\_WIDTH & C3S command vector \\
+    \hline
+    c3s\_command\_valid  & O   & 1                 & C3S command is valid, optional and custom use \\
+    \hline
+    c3s\_command\_sel    & O   & 1                 & Asserted high when C3S is running and commands are valid \\
+    \hline
+    \multicolumn{4}{c}{Response} \\
+    \hline
+    c3s\_response        & I   & C\_COMMAND\_WIDTH & C3S response vector \\
+    \hline
+    c3s\_response\_valid & I   & 1                 & Response is valid and should be stored in response array \\
+  \end{tabular}
+\end{center}
+
+\textbf{Note}: Signals are little-endian ($N$ \textbf{downto} 0)
+
+\subsection{Data Array}
+VHDL Name: c3s\_data(bram\_wrap.vhdl)
+
+The data array is simply a C\_COMMAND\_WIDTH wide by
+2\textsuperscript{C\_ADDRESS\_WIDTH} deep array that contains the
+instructions. Each bit of a row corresponds one-to-one with each bit
+of c3s\_command, and each row is a discrete command. The Instruction
+Flow Array controls exactly how these commands are sent.
+
+The array is implemented as a BRAM (Block RAM) primitive with 2 R/W
+ports. Port A is connected to the control block which does reads
+during C3S execution. The control block does not do writes. Port B is
+connected to the configuration block for read and write configurations
+over AXI4-Lite, where each row of the data array is one or more unique
+register(s).
+
+\begin{emulation}
+In an emulation environment, BRAM primitives are not available in the
+hardware, as they are specific for Xilinx FPGAs like that used on
+Apollo. The BRAM wrapper, bram\_wrap.vhdl, is designed to infer
+latches if it's in an environment without BRAM devices.
+\end{emulation}
+
+\subsection{Response Capture Array}
+VHDL Name: c3s\_resp(bram\_wrap.vhdl)
+
+The response capture array provides a method to see the responses
+coming across an interface. No checking is done; rather the responses
+are inserted into the array for manual analysis. The array is written
+to by an incrementing write pointer. When the maximum value of the
+write pointer is reached, it resets to 0 and starts overwriting
+previous entries. This ensures that the most recent responses received
+are found in the array. When a response is stored in the array, there
+is also a timestamp stored. This measures the time from the start of
+C3S execution to when the response was received by the Response
+Capture Array.
+
+The C3S\_RESP\_CNTL provides a method to see where in the array we are
+writing, if we have wrapper around. There is also a way to reset the
+write address to start counting from 0 in order to provide a higher
+chance of a repeatable test.
+
+This array is the same size as the data array: C\_COMMAND\_WIDTH wide
+by 2\textsuperscript{C\_ADDRESS\_WIDTH} deep.
+
+There is a wrap path inside the control block that allows c3s\_command
+to be written into the response array rather than c3s\_response. This
+allows debug of a C3S sequence to verify the commands being sent
+without relying on the interface. Additionally, it is possible to
+disable c3s\_command\_sel in order to capture the command without
+actually sending anything across the interface, in order to not
+interfere with real traffic. Both of these settings are configurable
+in C3S\_CNTL.
+
+\subsection{Instruction Flow Array}
+VHDL Name: c3s\_flow(bram\_wrap.vhdl)
+
+The instruction flow array is the meta information associated with
+each data entry. The array is a constant 32 bits wide by
+2\textsuperscript{C\_ADDRESS\_WIDTH} deep. This flow entry contains a
+repeat flag, a next instruction pointer, and a last entry flag. The
+repeat flag indicates that a command repeats a number of times. Each
+command is run one more than than the number gives, e.g. 0 means the
+command will run only once, 1 means the command is repeated twice. The
+next instruction pointer points to the command that will run next. If
+set to the next address, execution will serially go through the
+array. This also allows infinite loops. Finally, if execution sees a
+command with the last entry flag, then C3S execution will
+stop. Currently, the command containing the last entry flag is not
+executed, so the final command executed is the command before the one
+with the last entry flag set.
+
+\subsection{Control Block}
+VHDL Name: c3s\_cntl(c3s\_cntl.vhdl)
+
+The control block is the core of C3S that performs a few functions. It
+contains the central state machine, the read controls for port A of
+the flow and data, and write controls for port A of the response. The
+state machine, outlined in Figure~\ref{fig:c3s_fsm}, steps through the
+C3S array as programmed by the Instruction Flow Array and forwards the
+command in the Data Array to the command bus. States are encode in a
+one-hot signal, with c3s\_fsm\_q(0) being set for state 0, and so
+on. Additionally, the control block contains the write logic for the
+response array, writing to the response array only when the response
+is valid.
+
+\begin{figure}[h]
+  \begin{center}
+    \input{images/c3s_fsm.tex}
+  \end{center}
+  \caption[C3S State Machine]{\label{fig:c3s_fsm}C3S State Machine
+  }
+\end{figure}
+
+\subsection{Configuration Block}
+VHDL Name: c3s\_flow(c3s\_flow.vhdl)
+
+The configuration block contains the single configuration register in
+C3S, as well as a means to access the data in each of the 3 arrays. It
+functions as an AXI4-Lite slave with an offset address configurable by
+application.
+
+Inside of C3S, the local offsets are:
+
+\begin{center}
+  \begin{tabular}{l|l}
+    \texttt{0x00000} - \texttt{0x0FFFF} & Data Array \\
+    \texttt{0x10000} - \texttt{0x1FFFF} & Response Array \\
+    \texttt{0x20000} - \texttt{0x2FF00} & Instruction Flow Array (Only addresses with (7:0) = 0 are valid) \\
+    \texttt{0x30000}                    & C3S CNTL \\
+    \texttt{0x30004}                    & C3S RESP CNTL \\
+  \end{tabular}
+\end{center}
+
+The main configuration register, C3S\_CNTL, contains a bit that is
+written to start C3S execution, as well as to stop it, if
+needed. There is also a bit to indicate if C3S is running or not,
+which is automatically reset when execution is complete, as well as a
+bit to indicate if C3S has run and is done running.
+
+There is also a register to monitor and manipulate where we're writing
+in the response array to allow software to better parse the results.
+
+\subsection{Registers}
+
+\textbf{Note}: Because the C3S arrays have generic width and depth
+arrays, there are multiple copies of each register. \$\{N\} enumerates
+rows, whiles \$\{M\} enumerates columns, with $0 \leq \$\{N\} <
+2^{\textrm{C\_ADDRESS\_WIDTH}}$ and $0 \leq \$\{M\} <
+\textrm{C\_COMMAND\_WIDTH} / 32$.
+
+Each array takes a max of 8 bits of addresses for a row, and 8 bits of
+addressing for a column. If configured for a smaller size, than the
+extra registers don't exist and the addresses for them are
+invalid. Bits 7:0 of the local address are the column, while bits 15:8
+are the row.
+
+The register in column 0 always contains the data for
+c3s\_command(31:0), column 1 contains data for c3s\_command(63:32),
+etc. Row 0 has command 0, row 1 has command 1, etc. The same logic
+holds for c3s\_response(31:0), etc., as well. The response is
+prepended with a 32 bit timestamp indicating the capture time. Thus,
+if c3s\_response is 512 bits wide, bits 543:512 are the timestamp.
+
+% C3S Data N_M
+\subsubsection{C3S Data \$\{N\}\_\$\{M\}}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_DATA\_\$\{N\}\_\$\{M\}                                                           \\
+  Address Offset & $\$\{N\} * \texttt{0x100} + \$\{M\}$                                                  \\
+  VHDL Name      & c3s\_data.bram\_inst.ram\_block($\$\{N\}$)($\$\{M\} * 32 + 31$ downto $\$\{M\} * 32$) \\ \hline
+
+  Description &
+  Instruction program steps for C3S to execute. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & COMMAND        & RW   & 0     &
+
+  C3S command. Directly corresponds to c3s\_command($\$\{M\} * 32 +
+  31$ downto $\$\{M\} * 32$). \\
+\end{tabularx}
+
+% C3S Response N_M
+\subsubsection{C3S Response \$\{N\}\_\$\{M\}}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_RESPONSE\_\$\{N\}\_\$\{M\}                                                       \\
+  Address Offset & $\$\{N\} * \texttt{0x100} + \$\{M\} + \texttt{0x10000}$                               \\
+  VHDL Name      & c3s\_resp.bram\_inst.ram\_block($\$\{N\}$)($\$\{M\} * 32 + 31$ downto $\$\{M\} * 32$) \\ \hline
+
+  Description &
+  Captured responses received from the other side of the interface driven by C3S. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & RESPONSE       & ROX  & 0     &
+
+  C3S response. Directly corresponds to c3s\_response($\$\{M\} * 32 +
+  31$ downto $\$\{M\} * 32$). \\
+\end{tabularx}
+
+% C3S Response N Timestamp
+\subsubsection{C3S Response \$\{N\} Timestamp}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_RESPONSE\_\$\{N\}\_TIMESTAMP                                                     \\
+  Address Offset & $\$\{N\} * \texttt{0x100} + $C\_COMMAND WIDTH/32$ + \texttt{0x10000}$                 \\
+  VHDL Name      & c3s\_resp.bram\_inst.ram\_block($\$\{N\}$)(C\_COMMAND WIDTH + 31 downto C\_COMMAND WIDTH) \\ \hline
+
+  Description &
+  Timestamp corresponding to response entry \$\{N\}. The address of
+  this register is 1 more than the last entry of C3S
+  Response \$\{N\}\_\$\{M\} of each row. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0  & TIMESTAMP      & ROX  & 0     &
+
+  Number of cycles since the start of C3S execution that this entry
+  was stored in the response array. \\
+\end{tabularx}
+
+% C3S Flow N
+\subsubsection{C3S Flow \$\{N\}}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_FLOW\_\$\{N\}                            \\
+  Address Offset & $\$\{N\} * \texttt{0x100} + \texttt{0x20000}$ \\
+  VHDL Name      & c3s\_flow.bram\_inst.ram\_block($\$\{N\}$)    \\ \hline
+
+  Description &
+  Meta instructions to control the execution of C3S.
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31    & C3S\_COMMAND\_VALID & RW   & 0     &
+
+  Mark a command as valid. This drives c3s\_command\_valid to
+  accompany c3s\_command. The use of this signal depends on
+  application, useful only if the driven interface requires it. This
+  field is not used internal to C3S, and is optional if the interface
+  doesn't require it. \\
+
+  30:15 & Reserved            & RW   & 0     &
+
+  Reserved 0. \\
+
+  14:12  & REPEAT\_COUNT      & RW   & 0     &
+
+  Number of times to repeat command in addition to initial time. Total
+  executions of command is $\textrm{REPEAT\_COUNT} + 1.$ \\
+
+  11:9  & Reserved            & RW   & 0     &
+
+  Reserved 0. \\
+
+  8     & LAST\_INSTRUCTION   & RW   & 0     &
+
+  Indicates that this is the last command and C3S execution should
+  stop. This command is not executed. \\
+
+  7:0   & NEXT\_INSTRUCTION   & RW   & 0     &
+
+  Indicates the next command to go to after executing this command
+  (including loops). \\
+\end{tabularx}
+
+% C3S Control
+\subsubsection{C3S Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_CNTL                          \\
+  Address Offset & \texttt{0x30000}                   \\
+  VHDL Name      & c3s\_cfg.c3s\_cfg\_regs.reg\_00\_q \\ \hline
+
+  Description &
+  Generic control register for C3S containing status and start \& stop controls.
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic      & Type & Reset & Description \\ \hline
+
+  31:11 & Reserved            & RO   & 0     &
+
+  Reserved 0. \\
+
+  10    & C3S\_TMPL\_B\_MASK  & RW   & 0     &
+
+  When set, only store a suspected template B if there is a non-zero
+  opcode in any of the three packets or the data is marked valid. All
+  other templates are captured unconditionally. Template B is detected
+  by looking only at c3s\_response(465 downto 460), so it's possible
+  that some data flits will not be captured. \\
+
+  9     & C3S\_SEL\_DISABLE   & RW   & 0     &
+
+  Set to disable c3s\_command\_sel and force signal to 0. Allows
+  execution of C3S without interfering with interface, for debug. Does
+  not affect wrap path. \\
+
+  8     & C3S\_WRAP\_ENABLE   & RW   & 0     &
+
+  Set to enable wrap path. Response array will trace c3s\_command
+  rather than c3s\_response. c3s\_command output will not be
+  affected. \\
+
+  7:4   & Reserved            & RO   & 0     &
+
+  Reserved 0. \\
+
+  3     & C3S\_DONE           & RWX  & 0     &
+
+  Returns 1 when C3S is done running. Returns 0 otherwise. This is set
+  automatically by hardware when a C3S execution finishes, and is
+  reset automatically when one starts. This bit is designed to be
+  polled by software to wait until the end of a C3S run. It can also
+  be reset manually to ensure that C3S actually runs. \\
+
+  2     & C3S\_IP             & ROX  & 0     &
+
+  Returns 1 when C3S is running (in progress). Returns 0 otherwise. \\
+
+  1     & C3S\_STOP           & RWX  & 0     &
+
+  Write to 1 to stop C3S. Writing to 0 has no effect. Self-resetting,
+  and always returns 0 when read. If C3S is not running, writing to 1
+  has no effect. \\
+
+  0     & C3S\_.START         & RWX  & 0     &
+
+  Write to 1 to start C3S. Writing to 0 has no effect. Self-resetting,
+  and always returns 0 when read. If C3S is running, writing to 1 has
+  no effect. \\
+\end{tabularx}
+
+% C3S Response Control
+\subsubsection{C3S Response Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & C3S\_RESP\_CNTL                    \\
+  Address Offset & \texttt{0x30004}                   \\
+  VHDL Name      & c3s\_cfg.c3s\_cfg\_regs.reg\_01\_q \\ \hline
+
+  Description &
+  Control register to monitor and manipulate writing the response array.
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic                & Type & Reset & Description \\ \hline
+
+  31:10 & Reserved                      & RO   & 0     &
+
+  Reserved 0. \\
+
+  9     & C3S\_RESP\_WRITE\_ADDR\_RESET & RWX  & 0     &
+
+  Write to 1 to reset the value of the response addr write pointer to
+  0. This can be used to allow a clean slate when running a new C3S
+  test, to allow parsing the response array to be a bit more
+  predictable. Writing to 0 has no effect. \\
+
+  8     & C3S\_RESP\_OVERFLOW           & RWX  & 0     &
+
+  Indicates that the response array writes have wrapped around and are
+  now overwriting previous entries. This is not an error, but
+  indicates that old data is being overwritten and the valid data
+  wraps around. Write to 0 to reset. This is not reset automatically
+  when setting bit 9. \\
+
+  7:0   & C3S\_RESP\_WRITE\_ADDR        & ROX  & 0     &
+
+  Row address of the next entry in the response array to be
+  written. This value minus 1 is the most recently written to row. \\
+\end{tabularx}
+
+\subsection{Implementations}
+
+\subsubsection{TL/DL Interface}
+Name: c3s\_tlx\_dlx(c3s\_rlm.vhdl) \\
+C\_CONTROL\_WIDTH = 512 \\
+C\_ADDRESS\_WIDTH = 5
+
+In this implementation, C3S directly manipulates the TL/DL interface,
+specifically dlx\_tlx\_flit(511 downto 0) and
+dlx\_tlx\_flit\_valid. This allows C3S to send a control or data flit
+as if originating from the TL. c3s\_control(511 downto 0) are assigned
+to dlx\_tlx\_flit(511 downto 0). C3S\_COMMAND\_VALID is assigned to
+dlx\_tlx\_flit\_valid. Note that most of the DL content in
+dlx\_tlx\_flit(511 downto 448) is discarded by the DL in a control
+flit. The only values in the DL content that the TL sends to the DL
+are the Data Run Length, Bad Data Flit Indicator and TL Template,
+which are in dlx\_tlx\_flit(465 downto 448). dlx\_tlx\_flit(511 downto
+465) is not used by the DL during a control flit. See the TL
+specification for interface detail. Because C3S doesn't read any
+responses from upstream, there is no back pressure and credits must be
+manually managed when coding up a control sequence. This can cause
+complications when unexpected events happen, such as a replay, that
+can invalidate a C3S sequence.
+
+To illustrate how this implementation can be used, what follows is a
+very simple example to illustrate the point.
+
+\lstset{language=Perl}
+\begin{lstlisting}
+# Pseudo-functions to write/read an AXI address
+# void write_reg(address, data);
+# int read_reg(address);
+
+# Control
+write_reg(0x30000, 0x00000100); # Enable wrap
+
+# Data Array
+write_reg(0x0000E, 0x00000000); # Instruction 0: Template 0 (Bit 460)
+write_reg(0x0010E, 0x00001000); # Instruction 1: Template 1 (Bit 460)
+
+# Flow Array
+write_reg(0x20000, 0x80000001); # Valid, GOTO 1
+write_reg(0x20100, 0x80003002); # Valid, GOTO 2, repeat 3 times (4 total)
+write_reg(0x20200, 0x00000100); # END
+
+# RMW start bit
+write_reg(0x30000, 0x1 | read_reg(0x30000));
+\end{lstlisting}
+
+This will cause C3S to send a single flit with Template 0, followed by
+4 flits with Template 1. Because no opcodes are specified, every
+single command is a NOP.
+
+\subsubsection{Internal DL}
+Name: c3s\_dlx(c3s\_rlm.vhdl) \\
+C\_COMMAND\_WIDTH = 512 \\
+C\_ADDRESS\_WIDTH = 5
+
+This implementation is similar to the previous one, with the change
+that instead of driving an external interface to the DL, it instead
+drives an internal interface. This provides all the same controls as
+earlier, with the addition of being able to specifiy the fields
+previously discarded by the DL in the DL content: CRC, ACK Count, and
+DL2DL ACK. See the TL and DL specification for interface detail.

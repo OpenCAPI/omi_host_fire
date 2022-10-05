@@ -106,7 +106,8 @@ parameter  GEMINI_NOT_APOLLO = 0
 ,tlx_dlx_debug_info            // -- < input [31:0]
  
 ,opt_gckn                      //--   < input 
-,ocde                                            
+,ocde
+,dl_debug_vector
 ,reg_04_val                    // -- input [31:0]
 ,reg_04_hwwe                      // -- output
 ,reg_04_update                    // -- output [31:0]
@@ -136,6 +137,7 @@ parameter  GEMINI_NOT_APOLLO = 0
 ,tsm_state2_to_3
 ,tsm_state4_to_5
 ,tsm_state6_to_1
+,lane_force_unlock
 );
 // ----------------------
 // -- RX interface
@@ -190,7 +192,7 @@ output            ln7_rx_slip;
 // -- tlx interface
 output            dlx_tlx_flit_credit;
 output [2:0]      dlx_tlx_init_flit_depth;
-(*mark_debug = "true" *)input             tlx_dlx_flit_valid;
+input             tlx_dlx_flit_valid;
 input  [511:0]    tlx_dlx_flit;
 // -- Phy interface
 output [63:0]     dlx_l0_tx_data;
@@ -224,6 +226,7 @@ input  [31:0]     tlx_dlx_debug_info;
 
 input             opt_gckn;
 input             ocde;
+output [127:0]    dl_debug_vector;
 input  [31:0]     reg_04_val;
 output            reg_04_hwwe;
 output [31:0]     reg_04_update;
@@ -237,6 +240,7 @@ output            dlx_reset;
 input             tsm_state2_to_3;
 input             tsm_state4_to_5;
 input             tsm_state6_to_1;
+input [7:0]       lane_force_unlock;
 
 
 //-- inout             gnd;
@@ -266,7 +270,7 @@ wire            tx_rx_reset;
 wire            train_ts2;
 wire            train_ts67;
 wire            rx_tx_crc_error;
-(*mark_debug = "true" *)wire            rx_tx_retrain;
+wire            rx_tx_retrain;
 wire            rx_tx_nack;
 wire [4:0]      rx_tx_tx_ack_rtn;
 wire [3:0]      rx_tx_rx_ack_inc;
@@ -331,10 +335,10 @@ assign          cfg_transmit_order = 1'b0;
 
 assign EDPL_ena = reg_04_val[26];
 assign EDPL_max_cnt_reset = reg_04_val[25];
-assign x4OL_mode = ln_cfg_q[2];
-assign force_degrade = ln_cfg_q[1];
-assign degrade_to_inside = ln_cfg_q[0];
-assign force_retrain = reg_04_val[24];
+assign x4OL_mode = 1'b0;//ln_cfg_q[2];
+assign force_degrade = 1'b0;//ln_cfg_q[1];
+assign degrade_to_inside = 1'b0;//ln_cfg_q[0];
+assign force_retrain = 1'b0;//reg_04_val[24];
 assign EDPL_cfg_err_thres = reg_04_val[6:4];
 assign ln_cfg_din[2:0] = dlx_reset_int ? 3'b000 :
                          ltch_lane_cfg ? reg_04_val[29:27] : ln_cfg_q[2:0];
@@ -427,6 +431,7 @@ ocx_dlx_rxdf #(.GEMINI_NOT_APOLLO(GEMINI_NOT_APOLLO)) rx (
 ,.x4OL_mode                     (x4OL_mode)                     
 ,.force_degrade                 (force_degrade)
 ,.degrade_to_inside             (degrade_to_inside)
+,.lane_force_unlock             (lane_force_unlock)
 //-- ,.gnd                           (gnd)                           // -- <> inout
 //-- ,.vdn                           (vdn)                           // -- <> inout
 );
@@ -511,6 +516,7 @@ ocx_dlx_txdf #(.GEMINI_NOT_APOLLO(GEMINI_NOT_APOLLO)) tx (
 ,.force_degrade                 (force_degrade)
 ,.degrade_to_inside             (degrade_to_inside)
 ,.ltch_lane_cfg                 (ltch_lane_cfg)
+,.dl_debug_vector               (dl_debug_vector)
 //-- ,.gnd                           (gnd)                           // -- <> inout
 //-- ,.vdn                           (vdn)                           // -- <> inout
 );

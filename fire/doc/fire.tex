@@ -1,0 +1,69 @@
+\documentclass{article}
+
+\usepackage{longtable}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+\usepackage[margin=1in]{geometry}
+\usepackage{tabularx}
+\usepackage{pdflscape}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{tikz-timing}
+\usepackage[framemethod=TikZ]{mdframed}
+\usepackage{tikz}
+\graphicspath{ {images/} }
+\usepackage[bookmarks=true]{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+}
+
+\newenvironment{emulation}[1][]{%
+    \begin{mdframed}[%
+        frametitle={Emulation Note},
+        skipabove=\baselineskip plus 2pt minus 1pt,
+        skipbelow=\baselineskip plus 2pt minus 1pt,
+        frametitleaboveskip= 7pt,
+        frametitlebelowskip= 7pt,
+        linewidth=1pt,
+        linecolor=black,
+        frametitlerule=false,
+        frametitlebackgroundcolor=gray!10,
+        backgroundcolor=gray!10,
+        roundcorner=7pt,
+    ]%
+}{%
+    \end{mdframed}
+}
+
+\pagestyle{fancy}
+
+\lfoot{\today}
+\cfoot{IBM Confidential}
+\rfoot{\thepage}
+
+\begin{document}
+
+\include{version}
+\include{title}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\include{overview}
+\include{userguide}
+\include{reset}
+\include{axi}
+\include{fml}
+\include{opencapi}
+\include{c3s}
+\include{fbist}
+\include{isdimm}
+
+\appendix
+
+\include{pins}
+
+\end{document}

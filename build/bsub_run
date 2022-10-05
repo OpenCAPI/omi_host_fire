@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+CWD=$(dirname "$(readlink -f "$0")")
+
+# Call with -Is so the output is printed to the screen
+CMD="./run $@" bsub -Is -cwd $CWD < $CWD/build.lsf

@@ -1,0 +1,57 @@
+\section{Reset} \label{section_reset}
+
+There is a single asynchronous reset pin on Fire. A block of Xilinx IP
+synchronizes this reset and distributes it to all logic on the
+chip. When this reset is deasserted, all Fire functions and AXI
+interconnects will be idle and functional, except for the OpenCAPI
+link. At this time, the GTY Transceivers will go through an automatic
+reset sequence, and signal the DL when done. The DL will then
+automatically start its calibration sequence. When calibration is
+complete, the DL will set a register bit indicating it is complete and
+OpenCAPI traffic can start.
+
+The asynchronous reset is driven from the BMC on the Apollo board, and
+can be overridden by a button on the board too. Code must poll the
+register bit indicating the DL is complete before performing any
+transactions across OpenCAPI or starting any traffic-generating tests,
+such as FBIST or C3S. These tests can be programmed, but not started.
+
+A normal startup procedure would look like the following:
+
+\begin{itemize}
+
+\item
+  Assert the reset for both OCMB and Fire.
+
+\item
+  Deassert the resets, and perform the I2C operation to set
+  DL0\_CONFIG0.CFG\_DL0\_ENABLE in OCMB to enable the link. The DL in
+  fire will start calibration automatically.
+
+\item
+  Wait for the link to train, polling the register bits in both Fire
+  and OCMB to indicate training is complete.
+
+\item
+  Configure OCMB as desired via MMIO operations, and configure Fire
+  for the desired test, and run tests.
+
+\end{itemize}
+
+\begin{emulation}
+  In the emulation model, because the PHY and Xilinx pervasive don't
+  exist, the reset interface is different. The core used in emulation
+  is a synchronous reset, used to reset all of the logic except for
+  the DL. The DL, which is normally held in reset waiting for a signal
+  from the PHY, receives these signals as inputs to the logic block. 7
+  signals from the transceivers must be set to 1 to start calibration
+  in the DL. These signals are tied together into a single signal,
+  gtwiz\_done. See the emulation interface signal list for signal
+  names.
+
+  Finally, the signal that indicates that DL calibration is complete
+  and traffic can start is an internal signal not currently accessible
+  via register. In emulation, this signal (FIRE.DLX\_TLX\_LINK\_UP)
+  should be accessed directly. When set, traffic is free to begin.
+
+\end{emulation}

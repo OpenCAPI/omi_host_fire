@@ -1,0 +1,175 @@
+#!/bin/bash
+
+set -eu
+
+source sim.cfg
+
+usage() {
+    echo "./sim build <shortcut>"
+    echo "  Build a model as specified in sim.cfg for <shortcut>"
+    echo "./sim run <shortcut>"
+    echo "  Build a perl fusion testcase as specified in sim.cfg for <shortcut>"
+    echo "Shortcuts:"
+    echo "  ./build <shortcut>"
+    echo "  ./run <shortcut>"
+    exit 1
+}
+
+build() {
+    build_model $@
+
+    # Grab the directory we're in
+    CWD=`dirname $(readlink -f $0)`
+    # Support directory
+    SUPPORTDIR=$CWD/../support
+    # Build in a dedicated directory
+    BUILDDIR=$CWD/models/$MODELNAME
+    # eClipz workspace
+    RELDIR=$CWD/../src
+
+    # If there's a morph level specified, run morph_vpp
+    if [[ -n $MORPH_TOP ]] ; then
+	$SUPPORTDIR/morph_vpp.sh $MORPH_TOP
+    fi
+
+    # Output files have a basename based on the testbench name
+    SPLIT=`echo $TESTBENCH | awk -F. '{print $1}' | tr '[:lower:]' '[:upper:]'`
+    OUTPUT_PREFIX="$SPLIT.$SPLIT"
+    
+    # If top level is a testbench, use it. Otherwise look in checkout, first for vhdl and then for verilog
+    VERILOG_FLAGS=""
+    if [[ -f $CWD/vhdl/$TESTBENCH ]] ; then
+	SRC=$CWD/vhdl/$TESTBENCH
+    elif [[ -f $RELDIR/vhdl/$TESTBENCH ]] ; then
+        SRC=$RELDIR/vhdl/$TESTBENCH
+    else
+        TESTBENCH=${TESTBENCH/.vhdl/.v} # Replace vhdl extension with v
+	SRC=$RELDIR/verilog/$TESTBENCH
+        VERILOG_FLAGS="-verilog -module $TESTBENCH" # Add additional build flags
+        OUTPUT_PREFIX="${SPLIT}.V" # Output doesn't have repetition in name
+    fi
+
+    # If we're building with a drop configuration, add that option
+    if [ ! -z $DROP ]
+    then
+	CFG_OPTIONS="-cf $SUPPORTDIR/build_cfg/drop_${DROP}.cfg"
+    else
+	CFG_OPTIONS=""
+    fi
+
+    # Generate version information
+    $CWD/../../build/write_git_meta.sh
+
+    # Get return code
+    RC=0
+    # Run TVC to build model
+    $CTEPATH/tools/cde/bin/tvc -src $SRC \
+	-O $BUILDDIR/mb/proto \
+	-L 20170615 \
+	-renamecmdfile \
+	-morph \
+	-mixed \
+        -c "mb=$CWD/lib/ocmb/nvhdl" \
+        -I "$CWD/lib/ocmb/verilog" \
+        -cf $CWD/lib/ocmb/support/build_cfg/current_drop.cfg \
+        $VERILOG_FLAGS \
+	$BUILD_OPTIONS \
+	$CFG_OPTIONS \
+	-mbldopts "twmesa" \
+	-inputpath=$CWD/vhdl:$CWD/verilog:$RELDIR/vhdl:$RELDIR/verilog:$RELDIR/../../dlx || RC=$?
+
+    if [[ $RC -gt 19 ]] ; then
+	echo "BUILD FAILED"
+	exit $RC
+    elif [[ $RC -gt 0 ]] ; then
+	echo "BUILD FINISHED WITH WARNINGS"
+    else
+	echo "BUILD SUCCEEDED"
+    fi
+
+    # Move files around so mesa can find them
+    cp $BUILDDIR/mb/proto/$OUTPUT_PREFIX.m2twmod $BUILDDIR/mb/$MODELNAME.m2twmod
+}
+
+run() {
+    run_test $@
+    
+    # Grab the directory we're in
+    CWD=`dirname $(readlink -f $0)`
+    # Build command line
+    MODEL_PATH=$CWD/models/$MODELNAME/mb/$MODELNAME
+    TEST_PATH=$CWD/testcases
+    export SIMOUT=$CWD/output/$MODELNAME/$TEST
+    mkdir -p $SIMOUT
+    unset CTEPERLBIN
+    unset CTEPERLPATH
+    unset CTEPERLLIB
+    FUSION_HOME=$CTEPATH/tools/fusion/prod
+    FUSION_LATEST=$FUSION_HOME/R79_0
+    FUSION_SRC=$FUSION_LATEST/src
+    export PERL5LIB=$FUSION_LATEST/perl:$CTEPATH/tools/perl/5.8.1/lib/5.8.1:$TEST_PATH
+    FUSION_MESA=$CTEPATH/tools/simarama/bin-rtl/twmesa
+    FUSION_DLL=fusion.dlmlist
+    PERL_DLL=/afs/apd/func/fusion/perl/perl.dll
+    export SIMIN=.:$FUSION_LATEST:$FUSION_LATEST/lib/dbg:$FUSION_LATEST/perl:$FUSION_HOME:$CTEPATH/tools/simarama/bin-rtl:$CWD:$CWD/resets
+
+    echo "SIMIN: " $SIMIN
+    echo "SIMOUT: " $SIMOUT
+
+    model=$MODELNAME
+    model=${model%.*}
+
+    export TYPE_SIM_PATH=$CTEPATH/tools/simarama/bin-rtl
+
+    if [ -n "${FUSIONDEBUG-}" ]; then
+	DEBUG="ddd -args"
+    else
+	DEBUG=""
+    fi
+
+    read -r -d '' CMDLINE <<- EOM || true 
+	$DEBUG $FUSION_MESA $MODEL_PATH \
+	-ae2 -aeton $AETON -aetoff $AETOFF \
+	client rtx \
+	$FUSION_DLL \
+	$PERL_DLL \
+	NONE \
+	$model \
+	Fusion.TerminationDelayAfterFail=10 \
+	Fusion.TerminationDelayAfterPass=10 \
+	Fusion.ResetFilename=$RESET_FILE \
+	PerlScriptManager.PerlScriptFileList=$TEST_PATH/$TEST.pl \
+	Fusion.MaxTime=$MAXTIME \
+	PerlSupervisor.InterruptInterval=1 \
+	SimModelController.AssertFailLevel=30 \
+	Bsp.BugServer=None \
+	Bsp.CoverageCollect=false
+	EOM
+
+    # Print command line
+    echo
+    echo $CMDLINE
+    echo
+
+    # Execute command line
+    eval $CMDLINE
+
+    # Look for bugspray errors
+    sed -n -e '/Bugspray fail event/,/Bugspray Fail Auto Disable of this event/ p' $SIMOUT/$MODELNAME.SUM
+}
+
+if [[ $# -lt 1 ]] ; then
+    usage
+fi
+
+case "$1" in
+    'build')
+	build ${@:2}
+	;;
+    'run')
+	run ${@:2}
+	;;
+    *)
+	usage
+	;;
+esac

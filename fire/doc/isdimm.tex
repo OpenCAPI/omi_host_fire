@@ -1,0 +1,29 @@
+\section{Dedicated DDR4 ISDIMM} \label{section_isdimm}
+
+Connected to the FPGA there is a single DDR4 connector. This provides
+DRAM general use storage for any purpose in the FPGA design, such as
+memory for a MicroBlaze application. This memory is accessible as part
+of the overall memory space of the system. Because this address space
+is located with the address space of the configuration space on the
+FPGA, as well as all memory and registers on attached OCMB, care must
+be taken by application programmers to maintain in the DDR4 address
+space, as there is no protection. The DDR4 memory space is also shared
+unprotected among all applications.
+
+The offset and size of this memory is TBD. While different size
+memories can be installed on the board, this requires a different FPGA
+image to match the new configuration. Currently, the memory controller
+logic does not support A17 (address bit 17) or C2 (chip id bit 2), and
+targets a 72-bit DIMM with x4 DRAMs.
+
+The FPGA logic is implemented with Xilinx IP consisting of a DDR4
+memory controller and a DDR4 PHY, detailed in \textit{UltraScale
+Architecture-Based FPGAs Memory IP v1.4}
+(PG150)\footnote{\url{https://www.xilinx.com/support/documentation/ip\_documentation/ultrascale\_memory\_ip/v1\_4/pg150-ultrascale-memory-ip.pdf}}.
+This memory is not high performance, but is high capacity. The core is
+attached to the main AXI4 Interconnect, and can be addressed similar
+to other memory attached to that interconnect. The monitor and control
+interface for the ECC is connected via a separate AXI4-Lite port.
+
+This logic and port is optional, only needed if FPGA logic or
+applications require it.

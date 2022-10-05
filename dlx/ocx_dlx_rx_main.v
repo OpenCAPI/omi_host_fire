@@ -39,7 +39,7 @@ parameter  GEMINI_NOT_APOLLO = 0
  ,ln5_data                      // < input
  ,ln6_data                      // < input
  ,ln7_data                      // < input
- ,data_flit                     // < input
+ ,data_flit_raw                 // < input
  ,disabled_lanes                // < input
  ,ctl_header                    // < input
 
@@ -110,7 +110,7 @@ input [63:0]    ln4_data;
 input [63:0]    ln5_data;
 input [63:0]    ln6_data;
 input [63:0]    ln7_data;
-input [7:0]     data_flit;              //-- data flit (header "01") seen on each lane
+input [7:0]     data_flit_raw;          //-- data flit (header "01") seen on each lane
 input [7:0]     disabled_lanes;         //-- if running in degraded mode (N/A for now)
 input [7:0]     ctl_header;             //-- indicate that we received a control sync header
 
@@ -176,15 +176,15 @@ reg  [35:0]     crc_bits0_q;            //-- crc bits to carry over
 reg  [35:0]     crc_bits1_q;            //-- crc bits to carry over
 reg             crc_init_q;             //-- clear crc carry over
 reg  [3:0]      run_length_q;           //-- run length counter
-(*mark_debug = "true" *)reg             flit_vld_q;             //-- flit is valid, ready to output
-(*mark_debug = "true" *)reg             tlx_crc_error_q;        //-- tell tlx of crc error
+reg             flit_vld_q;             //-- flit is valid, ready to output
+reg             tlx_crc_error_q;        //-- tell tlx of crc error
 reg             tx_crc_error_q;         //-- tell tx of crc error
-(*mark_debug = "true" *)reg             replay_pending_q;       //-- replay is pending
+reg             replay_pending_q;       //-- replay is pending
 reg             replay_ip_q;            //-- replay in progress
 
-(*mark_debug = "true" *)reg  [6:0]      rx_ack_ptr_q;           //-- ack pointer from replay flit
+reg  [6:0]      rx_ack_ptr_q;           //-- ack pointer from replay flit
 reg  [6:0]      rx_curr_ptr_q;          //-- current receive pointer
-(*mark_debug = "true" *)reg             nack_q;                 //-- latch nack field to output
+reg             nack_q;                 //-- latch nack field to output
 reg             tx_ack_ptr_vld_q;       //-- latch ack pointer valid to output
 reg  [11:0]     tx_ack_ptr_q;           //-- latch ack pointer to output
 reg  [4:0]      tx_ack_rtn_q;           //-- latch ack return field (acks sent by other side) to output
@@ -212,7 +212,7 @@ reg             lane_swap_q;            //-- lanes are in reverse order
 reg             linkup_q;               //-- link is done training and ready to go
 reg             tl_linkup_q;               //-- link is done training and ready to go
 reg             tl_linkup1_q;
-(*mark_debug = "true" *)reg             link_is_tl_q;               //-- link is done training and ready to go
+reg             link_is_tl_q;               //-- link is done training and ready to go
 reg             link_is_tl_d1_q;            //-- link is done training and ready to go
 reg             link_is_tl_d2_q;            //-- link is done training and ready to go
 reg             link_is_tl_d3_q;            //-- link is done training and ready to go
@@ -233,13 +233,13 @@ reg  [31:0]     dlx_config_q;
 wire [7:0]      dlx_link_error_din;
 reg  [7:0]      dlx_link_error_q;
 wire [7:0]      disabled_lanes_din;
-(*mark_debug = "true" *)reg  [7:0]      disabled_lanes_q;
+reg  [7:0]      disabled_lanes_q;
 wire            good_outsides_only_din;
 reg             good_outsides_only_q;
 wire            good_insides_only_din;
 reg             good_insides_only_q;
 wire            x4_not_x8_rx_mode_din;
-(*mark_debug = "true" *)reg             x4_not_x8_rx_mode_q;
+reg             x4_not_x8_rx_mode_q;
 wire            flit_cycle_odd_din;
 reg             flit_cycle_odd_q;
 wire            is_crc_data_flit_din;
@@ -281,7 +281,7 @@ wire            link_is_tl_d1_din;
 wire            link_is_tl_d2_din;
 wire            link_is_tl_d3_din;
 wire            retrain_din;
-(*mark_debug = "true" *)reg             retrain_q;
+reg             retrain_q;
 wire            retrain_d1_din;
 reg             retrain_d1_q;
 wire            retrain_d2_din;
@@ -294,7 +294,7 @@ wire [511:0]    flit_x2_inside;
 wire [511:0]    flit_x4;
 wire [511:0]    flit_x4_inside;
 wire [511:0]    flit;      //-- concatenated full flit, before latching
-(*mark_debug = "true" *)wire            master_valid_to_bs;
+wire            master_valid_to_bs;
 wire            forced_valid;
 wire            master_valid_deskew; // Master valid generated from deskew_all 
 wire            master_valid;           //-- flit is valid
@@ -309,22 +309,22 @@ wire            crc_nonzero;            //-- crc bits non-zero flag
 // wire [3:0]      crc_nonzero_din;
 // reg  [3:0]      crc_nonzero_q;
 wire            nack_dly_din;
-(*mark_debug = "true" *)reg             nack_dly_q;
+reg             nack_dly_q;
 wire            crc_error;
-(*mark_debug = "true" *)wire            is_data_flit;           //-- data flit
-(*mark_debug = "true" *)wire            is_ctrl_flit;           //-- control flit w/ valid crc
+wire            is_data_flit;           //-- data flit
+wire            is_ctrl_flit;           //-- control flit w/ valid crc
 wire            is_dl2dl_flit;          //-- dl2dl flit w/ valid crc
-(*mark_debug = "true" *)wire            is_replay_flit;         //-- replay flit w/ valid crc
-(*mark_debug = "true" *)wire            is_idle_flit;
+wire            is_replay_flit;         //-- replay flit w/ valid crc
+wire            is_idle_flit;
 wire            are_deskew;             //-- deskew blocks found on all lanes this cycle
 wire            matching_deskew;        //-- matching deskew blocks found on all lanes this cycle
 wire            good_insides;
 wire            good_outsides;
 wire            valid_crc_din;
 wire            is_crc_data_flit;
-(*mark_debug = "true" *)wire  [3:0]     sum_ctl_headers;
+wire  [3:0]     sum_ctl_headers;
 wire  [15:0]    crc_error_cntr_din;
- (*mark_debug = "true" *)wire            start_cycle;
+ wire            start_cycle;
 wire            start_cycle_x2_outside;
 wire            start_cycle_x2_inside;
 reg [15:0]      crc_error_cntr_q;
@@ -342,16 +342,17 @@ wire            rpl_sfn_din;
 wire [511:0]    flit_d1_din;
 wire [511:0]    flit_d2_din;
 reg [511:0]    flit_d1_q;
-(*mark_debug = "true" *) (*keep = "true" *)reg [511:0]    flit_d2_q;
+reg [511:0]    flit_d2_q;
 wire [511:0]    flit_to_bs_d1_din;
 reg [511:0]    flit_to_bs_d1_q;
 wire [511:0]    flit_to_bs_d2_din;
- (*mark_debug = "true" *)reg [511:0]    flit_to_bs_d2_q;
+reg [511:0]    flit_to_bs_d2_q;
 wire  [1:0]     recal_status_din;
-(*mark_debug = "true" *) reg   [1:0]     recal_status_q;
+ reg   [1:0]     recal_status_q;
 wire  [1:0]     sf_recal_status;
 wire [7:0]      x2_hold_din;
 reg  [7:0]      x2_hold_q;
+wire [7:0]      data_flit;
 //----------------------------------- end declarations -------------------------------------------
 //-- Dataflow == ln?_data(input) -> flit -> flit_q -> flit_to_tl_q -> flit_out (output)
 
@@ -414,6 +415,7 @@ assign flit_to_tl_din[511:0] = is_data_flit ? flit_q[511:0]:
 //-- outputs
 assign flit_out[511:0] = flit_to_tl_q[511:0];
 
+assign data_flit[7:0] = data_flit_raw[7:0] & ~disabled_lanes[7:0];
 //-- flit_cycle_odd_q = 1:   This is when the flit_q data is valid when x4_not_x8_rx_mode_q = 1 (only using 1/2 of the input lanes)
 //-- make data_flit fault tolerent only need some of them to be found.
 assign start_cycle =  (({data_flit[7], data_flit[5], data_flit[2], data_flit[0]} == 4'b1000) |               //-- stay on if 1 glitches high

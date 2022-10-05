@@ -1,0 +1,96 @@
+\section{User Guide} \label{section_userguide}
+
+The Fire FPGA provides a lot of flexibility and features that can be
+used for verifying OCMB. The various functions on Fire can be used in
+numerous complementary ways, and the strengths and weaknesses of each
+function are only appreciated after gaining experience with use. To
+attempt to bootstrap the start of that process, this chapter details
+an example of how Fire can be used on Day 1 of obtaining an OCMB
+module or a DDIMM to illustrate the features available. The objective
+is to provide the user with an understanding of what can done to allow
+a smoother attack of the verification plan.
+
+\begin{itemize}
+
+\item
+Even without OCMB, configuration registers in Fire can be written via
+Cronus. An I2C command is sent to Fire, where it is translated to an
+AXI4-Lite command to the AXI slave in the appropriate logic block,
+with the read data (if any) being returned on the I2C bus and printed
+to the console, all via Cronus.
+
+\item
+Presently, we can assume that the OpenCAPI link is calibrated and
+currently idle. Debugging this process is worthy of more detail, but
+currently we will assume it is working, pending further implementation
+of the PHYs.
+
+\item
+Once the OpenCAPI link is up and the DL block is functioning and
+sending idle flits, a good first operation to try would be a Config
+Write followed by a Config Read. C3S is a good function to try this,
+because it is very deterministic and doesn't rely on the TL. Program
+C3S to send a config\_write followed by a config\_read after a
+substantial idle time, and then start C3S, which will stop
+automatically when complete. Then it's possible to read from the C3S
+response array to see a mem\_wr\_response and a mem\_rd\_response with
+the data attached. Programming C3S and reading the results can be done
+via Cronus. This process does require the user to program and parse an
+entire flit manually.
+
+\item
+Once comfortable that Config Reads and Writes are working, the full
+OpenCAPI initialization sequence can be completed. Rather than coding
+an entire C3S instruction stream by hand, it would be useful to use
+the direct path from Cronus to OpenCAPI, via I2C. The I2C block
+converts an operation to AXI4-Lite, routes it directly to the OpenCAPI
+block, where it is converted to an OpenCAPI command. This allows the
+user to program a Cronus procedure using OpenCAPI config register
+address and data to initialize OpenCAPI without the low level detail of C3S.
+
+\item
+Now that Config Reads and Writes are working, it's possible to move on
+up to MMIO operations. Similar to config\_write and config\_read, C3S
+can be programmed with write\_mem and read\_mem commands, with the
+results appearing in the C3S response array. Then, using the same
+direct I2C to OpenCAPI path, all configuration registers on OCMB can
+be written or read, and OCMB can be setup to match a certain
+configuration using Cronus procedures.
+
+\item
+With OCMB configured and the memory interface up, real operations to
+memory can be done. To start, configure C3S to send a write\_mem and
+read\_mem command to an address in main memory. The response and
+read data can be read, and it's also possible to perform an MMIO
+operation to read status registers on OCMB to ensure there were no
+additional errors. At this point, Cronus can do direct reads and
+writes to memory across the AXI4-Lite bus on Fire, although with low
+throughput.
+
+\item
+Now OCMB is alive. It can respond correctly to configuration reads and
+writes, and the sequencer can also handle real traffic. The next step
+would be to start pushing performance. Program C3S with as many reads
+or writes as there are credits available. Because C3S cannot respond
+to back pressure, it is up to the user to reasonably manage
+credits. C3S will not care if it sends more commands than there are
+credits available. These bursts of commands can automatically loop, with a
+long enough idle period between loops. This starts stressing the
+sequencer. To start stressing the TLX, different types of templates
+can be tried, with different mixes of opcodes.
+
+\item
+OCMB is ready to start handling actual traffic. This is where FBIST
+comes in. FBIST can be configured to do a programmable mix of reads
+and writes. FBIST correctly handles back pressure, so it will follow
+the limitations of OpenCAPI as a system would. To add a twist, program
+FBIST to trigger and interrupt to MicroBlaze to send an MMIO to OCMB,
+to mix in those commands with regular traffic. Let this test run for a
+period of time and check the FBIST results to make sure there were no
+fails or miscompares. Read the status registers on OCMB to look for
+any fails on the buffer.
+
+\item
+Test away!
+
+\end{itemize}

@@ -16,9 +16,13 @@ if {$argc > 0} {
 # Source Directory
 #  Path to source directory containing vhdl/ and verilog/ directories
 variable SRC_DIR $::env(SRC_DIR)
+variable BRD_DIR $::env(BRD_DIR)
 
 # Output Directory
 variable OUTPUT_DIR $::env(OUTPUT_PREFIX)/impl_$strategy_index
+
+# Target FPGA
+variable XILINX_PART $::env(XILINX_PART)
 
 ################################################################################
 # Implementation Strategies
@@ -163,7 +167,8 @@ file mkdir $OUTPUT_DIR
 # Open Synthesis Checkpoint
 ################################################################################
 open_checkpoint $OUTPUT_DIR/../synth_1/post_synth.dcp
-read_xdc [ glob $SRC_DIR/xdc/pins.xdc ]
+read_xdc [ glob $BRD_DIR/pins.xdc ]
+
 
 ################################################################################
 # opt_design

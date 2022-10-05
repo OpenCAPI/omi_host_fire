@@ -1,0 +1,648 @@
+\graphicspath{ {images/} }
+
+\section{OpenCAPI} \label{section_opencapi}
+
+\subsection{AXI Interface}
+
+%\begin{figure}[h]
+%  \begin{center}
+%    \begin{tikztimingtable}
+%      aclk             & 26{2C}    \\
+%      \\
+%      awid             & 4U 8D       40U \\
+%      awaddr           & 4U 8D       40U \\
+%      awlen            & 4U 8D{0x01} 40U \\
+%      awvalid          & 4L 8H       40L \\
+%      awready          & 8L 4H       40L \\
+%      \\
+%      wid              & 20U  12D          20U \\
+%      wdata            & 20U   8D{0} 4D{1} 20U \\
+%      wlast            & 20U   8L    4H    20U \\
+%      wvalid           & 20L  12H          20L \\
+%      wready           & 24L   8H          20L \\
+%      \\
+%      bid              & 40U 8D 4U \\
+%      bresp            & 40U 8D 4U \\
+%      bvalid           & 40L 8H 4L \\
+%      bready           & 44L 4H 4L \\
+%    \end{tikztimingtable}
+%  \end{center}
+%  \caption[AXI Write Transaction with 2 transfers]{\label{fig:opencapi_axi_write}AXI Write Transaction with 2 transfers
+%  }
+%\end{figure}
+%
+%\begin{figure}[h]
+%  \begin{center}
+%    \begin{tikztimingtable}
+%      aclk             & 26{2C}    \\
+%      \\
+%      arid             & 4U 8D       40U \\
+%      araddr           & 4U 8D       40U \\
+%      arlen            & 4U 8D{0x00} 40U \\
+%      arvalid          & 4L 8H       40L \\
+%      arready          & 8L 4H       40L \\                                                                                                                                            =
+%      \\
+%      rid              & 40U 8D 4U \\
+%      rdata            & 40U 8D 4U \\
+%      rresp            & 40U 8D 4U \\
+%      rlast            & 40U 8H 4U \\
+%      rvalid           & 40L 8H 4L \\
+%      rready           & 44L 4H 4L \\
+%    \end{tikztimingtable}
+%  \end{center}
+%  \caption[AXI Read Transaction with 1 transfer]{\label{fig:opencapi_axi_read}AXI Read Transaction with 1 transfer
+%  }
+%\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \begin{tikztimingtable}
+      s0\_axi\_aclk                 & 12{3C}      \\
+      s0\_axi\_awid                 &  6U 12D 18U \\
+      s0\_axi\_awaddr               &  6U 12D 18U \\
+      s0\_axi\_awlen                &  6U 12D 18U \\
+      s0\_axi\_awvalid              &  6L 12H 18L \\
+      s0\_axi\_awready              & 12L  6H 18L \\
+      \\
+      axi\_write\_address\_state\_q & 12D{0b00} 6D{0b01} 6D{0b10} 12D{0b00} \\
+      axi\_trans\_awid              &  6U 12D            18U                \\
+      axi\_trans\_awaddr            &  6U 12D            18U                \\
+      axi\_trans\_awlen             &  6U 12D            18U                \\
+      axi\_trans\_awvalid           & 12L       6H       18L                \\
+    \end{tikztimingtable}
+  \end{center}
+  \caption{AXI Write Address Channel}{\label{fig:opencapi_axi_write_address_channel}
+  }
+\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \begin{tikztimingtable}
+      s0\_axi\_aclk              & 14{3C}                                 \\
+      s0\_axi\_wid               & 6U  18D                             18U \\
+      s0\_axi\_wdata             & 6U  12D{0xAAAAAAAA}  6D{0xBBBBBBBB} 18U \\
+      s0\_axi\_wlast             & 6L  12L              6H             18L \\
+      s0\_axi\_wvalid            & 6L  18H                             18L \\
+      s0\_axi\_wready            & 12L 12H                             18L \\
+      \\
+      axi\_write\_data\_state\_q & 12D{0b00}                   12D{0b01}              6D{0b10} 12D{0b00} \\
+      axi\_trans\_wid            &  6U 18D                                            18U                \\
+      axi\_trans\_wdata          &  6U 12D{0x00000000AAAAAAAA} 6D{0xA...AB..B} 18U                \\
+      axi\_trans\_wvalid         & 18L                         6H                     18L                \\
+    \end{tikztimingtable}
+  \end{center}
+  \caption{AXI Write Data Channel with 64b data 0xAAAAAAAABBBBBBBB}{\label{fig:opencapi_axi_write_address_channel}
+  }
+\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \begin{tikztimingtable}
+      s0\_axi\_aclk                & 12{3C}      \\
+      s0\_axi\_arid                &  6U 12D 18U \\
+      s0\_axi\_araddr              &  6U 12D 18U \\
+      s0\_axi\_arlen               &  6U 12D 18U \\
+      s0\_axi\_arvalid             &  6L 12H 18L \\
+      s0\_axi\_arready             & 12L  6H 18L \\
+      \\
+      axi\_read\_address\_state\_q & 12D{0b00} 6D{0b01} 6D{0b10} 12D{0b00} \\
+      axi\_trans\_arid             &  6U 12D            18U                \\
+      axi\_trans\_araddr           &  6U 12D            18U                \\
+      axi\_trans\_arlen            &  6U 12D            18U                \\
+      axi\_trans\_arvalid          & 12L       6H       18L                \\
+    \end{tikztimingtable}
+  \end{center}
+  \caption{AXI Read Address Channel}{\label{fig:opencapi_axi_read_address_channel}
+  }
+\end{figure}
+
+\subsubsection{Compatibility}
+
+The AXI/OpenCAPI connection is three AXI3 memory slaves. As they make
+use of the wid signal, conversion to AXI4 is non-trivial. It is
+possible in the future they could support both. No other AXI4 features
+are used, although if converted to exclusively AXI4 the axregion
+signals could combine the 3 slave ports into 1. In this chapter, all
+references to AXI refer specifically to AXI3.
+
+Some optional AXI signals are not supported. The slaves ignore axlock,
+axcache, and axprot. These concepts do not exist in OpenCAPI 3.1 and
+ignoring these signals do not cause any functional difference or
+variance from the AXI specification.
+
+The AXI slaves also ignore axsize, axburst, and wstrb, causing them to
+not comply these requirements of AXI3. The slaves assume that the
+burst size is always the same as the bus size (4 B), that transactions
+are always operating with a burst type of FIXED, and all bytes in a
+write transaction are being written. These assumptions are made
+regardless of the values of the appropriate signals.
+
+\subsubsection{OpenCAPI Commands}
+
+The AXI/OpenCAPI connection converts AXI transactions to OpenCAPI
+transactions. Not all OpenCAPI transactions can be sent via AXI. What
+follows is all valid OpenCAPI transactions, as well as what AXI
+transactions result in them, if any. Note that even if it's possible
+to send the AXI transaction, Explorer may still return a fail
+response. Any AXI transaction not covered here results in undefined
+behavior. Proper error checking may be added to ensure that the result
+is an error in the slave and would not be converted to OpenCAPI.
+
+\begin{enumerate}
+
+\item{NOP (No operation)}
+
+  Not possible via AXI.
+
+\item{INTRP\_RDY (Interrupt ready)}
+
+  Not possible via AXI. Access is available via a separate interface.
+
+\item{RD\_MEM (Read memory)}
+
+  Sent for AXI reads to the MMIO or Memory slave with an arlen of 0x0F
+  (64 B), 0x1F (128 B), and 0x3F (256 B). For reads to the MMIO slave,
+  the araddr[63:32] is replaced with CFG\_BAR[63:32] (0xFFFFFFF8 by
+  default). For MMIO, CAPPTag[15:12] = 0b1101 and for Memory
+  CAPPTag[15:12] = 0b1001. In both cases, CAPPTag[3:0] = arid. All
+  other CAPPTag bits are 0.
+
+  If a non-zero Resp\_code in a MEM\_RD\_FAIL command is returned,
+  rresp = SLVERR. Otherwise, rresp = OKAY.
+
+  In the future, an error may be flagged if any of araddr[63:32] is
+  non-zero in the MMIO slave.
+
+\item{PR\_RD\_MEM (Partial memory read)}
+
+  Sent for AXI reads to the MMIO or Memory slave with an arlen of 0x00
+  (4 B), 0x01 (8 B), 0x03 (16 B), and 0x07 (32 B). For reads to the
+  MMIO slave, the araddr[63:32] is replaced with CFG\_BAR[63:32]
+  (0xFFFFFFF8 by default). For MMIO, CAPPTag[15:12] = 0b1101 and for
+  Memory CAPPTag[15:12] = 0b1001. In both cases, CAPPTag[3:0] =
+  arid. All other CAPPTag bits are 0.
+
+  If a non-zero Resp\_code in a MEM\_RD\_FAIL command is returned,
+  rresp = SLVERR. Otherwise, rresp = OKAY.
+
+  In the future, an error may be flagged if any of araddr[63:32] is
+  non-zero in the MMIO slave.
+
+  An additional future enhancement may be to allow 1B and 2B
+  operations.
+
+\item{PAD\_MEM (Pad memory)}
+
+  Not possible via AXI. The TL supports it, but there is no way to
+  send the command.
+
+\item{WRITE\_MEM (Write memory)}
+
+  Sent for AXI writes to the MMIO or Memory slave with an awlen of
+  0x0F (64 B), 0x1F (128 B), and 0x3F (256 B). For writes to the MMIO
+  slave, the awaddr[63:32] is replaced with CFG\_BAR[63:32]
+  (0xFFFFFFF8 by default). For MMIO, CAPPTag[15:12] = 0b1100 and for
+  Memory CAPPTag[15:12] = 0b1000. In both cases, CAPPTag[3:0] =
+  awid. All other CAPPTag bits are 0.
+
+  If a non-zero Resp\_code in a MEM\_WR\_FAIL command is returned,
+  bresp = SLVERR. Otherwise, bresp = OKAY.
+
+  In the future, an error may be flagged if any of awaddr[63:32] is
+  non-zero in the MMIO slave.
+
+  An additional future enhancement may be made to support the
+  WRITE\_MEM\_BE command. While currently the design ignores wstrb, it
+  may not in the future. When sending a WRITE\_MEM, all bytes should
+  be marked valid with wstrb to ensure behavior remains the same in
+  the future.
+
+\item{WRITE\_MEM\_BE (Byte enable memory write)}
+
+  Not possible via AXI. The TL supports it, but there is no way to
+  send the command.
+
+\item{PR\_WR\_MEM (Partial cache line memory writer)}
+
+  Sent for AXI writes to the MMIO or Memory slave with an awlen of
+  0x00 (4 B), 0x01 (8 B), 0x03 (16 B), and 0x07 (32 B). For writes to
+  the MMIO slave, the awaddr[63:32] is replaced with CFG\_BAR[63:32]
+  (0xFFFFFFF8 by default). For MMIO, CAPPTag[15:12] = 0b1100 and for
+  Memory CAPPTag[15:12] = 0b1000. In both cases, CAPPTag[3:0] =
+  awid. All other CAPPTag bits are 0.
+
+  If a non-zero Resp\_code in a MEM\_WR\_FAIL command is returned,
+  bresp = SLVERR. Otherwise, bresp = OKAY.
+
+  In the future, an error may be flagged if any of awaddr[63:32] is
+  non-zero in the MMIO slave.
+
+  An additional future enhancement may be to allow 1B and 2B
+  operations.
+
+  An additional future enhancement may be made to support the
+  WRITE\_MEM\_BE command. While currently the design ignores wstrb, it
+  may not in the future. When sending a PR\_WR\_MEM, all bytes should
+  be marked valid with wstrb to ensure behavior remains the same in
+  the future.
+
+\item{CONFIG\_READ (Configuration read)}
+
+  Sent for AXI reads to the MMIO or Memory slave with an arlen of 0x00
+  (4 B), 0x01 (8 B), 0x03 (16 B), 0x07 (32 B), 0x0F (64 B), 0x1F (128
+  B), and 0x3F (256 B). CAPPTag[15:12] = 0b1111 and CAPPTag[3:0] =
+  arid. All other CAPPTag bits are 0. For arlen of 0x0F, 0x1F, and
+  0x3F, where a decode to partial length is not possible, the command
+  will be sent with a partial length of 0b111, which is reserved in
+  OpenCAPI.
+
+  If a non-zero Resp\_code in a MEM\_RD\_FAIL command is returned,
+  rresp = SLVERR. Otherwise, rresp = OKAY.
+
+  An additional future enhancement may be to allow 1B and 2B
+  operations.
+
+\item{CONFIG\_WRITE (Configuration write)}
+
+  Sent for AXI writes to the MMIO or Memory slave with an awlen of
+  0x00 (4 B), 0x01 (8 B), 0x03 (16 B), 0x07 (32 B), 0x0F (64 B), 0x1F
+  (128 B), and 0x3F (256 B). CAPPTag[15:12] = 0b1110 and CAPPTag[3:0]
+  = awid. All other CAPPTag bits are 0. For awlen of 0x0F, 0x1F, and
+  0x3F, where a decode to partial length is not possible, the command
+  will be sent with a partial length of 0b111, which is reserved in
+  OpenCAPI.
+
+  If a non-zero Resp\_code in a MEM\_WR\_FAIL command is returned,
+  bresp = SLVERR. Otherwise, bresp = OKAY.
+
+  An additional future enhancement may be to allow 1B and 2B
+  operations.
+
+  While currently the design ignores wstrb, it may not in the
+  future. When sending a CONFIG\_WRITE, all bytes should be marked
+  valid with wstrb to ensure behavior remains the same in the future.
+
+\item{MEM\_CNTL (Memory control)}
+
+  Not possible via AXI. Access is available via a separate interface.
+
+\end{enumerate}
+
+On the upstream side of the TL, Fire can receive templates 0, 1, 5, 9
+and B, and handle the following commands and responses: intrp\_req (up
+to 7 are logged), mem\_rd\_fail, mem\_rd\_resp, mem\_rd\_resp.ow,
+mem\_wr\_fail, mem\_wr\_resp, memctl\_done, nop, and
+return\_tl\_credits.
+
+\subsection{Registers}
+
+% OpenCAPI TL Transmit Templates
+\subsubsection{OpenCAPI TL Transmit Templates}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & OC\_TL\_TRANSMIT\_TEMPLATES              \\
+  Address Offset & \texttt{0x00000}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_0\_q \\ \hline
+
+  Description &
+  Transmit templates for Fire. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  31:0  & TEMPLATE\_ENABLED & RW   & 0x00000001 &
+
+  Bitwise enabling of what templates Fire can send. Setting bit 0
+  enables template 0, setting bit 1 enables template 1, etc. Template
+  0 should not be disabled. Only templates 0, 1, and 4 can be sent. \\
+\end{tabularx}
+
+
+% OpenCAPI INTRP REQ LOGGING
+\subsubsection{OpenCAPI INTRP\_REQ LOGGING}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & OC\_INTRP\_REQ\_LOG                      \\
+  Address Offset & \texttt{0x00004}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_1\_q \\ \hline
+
+  Description &
+  This register saves the OpenCAPI flag values of the last 7
+  INTRP\_REQ packets received by Fire. \\ \hline
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset & Description \\ \hline
+
+  31:28 & INTRP\_REQ\_FLAG0       & RO   & 0x0   & The flag value of the oldest intrp\_req received. \\
+  27:24 & INTRP\_REQ\_FLAG1       & RO   & 0x0   & The flag value of the second oldest               \\
+  23:20 & INTRP\_REQ\_FLAG2       & RO   & 0x0   & and so on .....                                   \\
+  19:16 & INTRP\_REQ\_FLAG3       & RO   & 0x0   &                                                   \\
+  15:12 & INTRP\_REQ\_FLAG4       & RO   & 0x0   &                                                   \\
+  11:8  & INTRP\_REQ\_FLAG5       & RO   & 0x0   &                                                   \\
+  7:4   & INTRP\_REQ\_FLAG6       & RO   & 0x0   & ... until the register is used up.                \\
+  3:0   & INTRP\_REQ\_FLAG\_COUNT & RW   & 0x0   &
+
+  The number of valid flags stored. If more than seven intrp\_req's
+  are received then this will saturate at a value of 7 and the flag
+  value in bits 7:4 will be overwritten if a new intrp\_req arrives
+  while the other bits in this register will be unaffected.  This
+  field is read/write but it only makes sense to write it to 0x0 to
+  reset the logging. \\
+\end{tabularx}
+
+% OpenCAPI MEM\_CNTL\_COMMAND
+\subsubsection{OpenCAPI MEM\_CNTL\_COMMAND}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & MEM\_CNTL\_COMMAND             \\
+  Address Offset & \texttt{0x00008}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_2\_q \\ \hline
+
+  Description &
+  This register provides control for sending mem\_cntl commands downstream and status on
+  mem\_cntl\_done responses received. Up to four mem\_cntl commands can be queued at one time.
+  If more than one is queued, the sending order will be 0,1,2,3. The tag values used are
+  chosen by hardware and cannot be programmed by firmware. The MS four bits of the CappTags
+  will always be "1010".
+  To send the command(s) the appropriate flag value(s) must be written to this register
+  and one or more start bits written '1'.
+  Firmware should only start new commandss when none of the state fields is non-zero
+  and if more than one mem\_cntl is to be sent then the commands should be packed
+  together, starting with command 0. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:29 & MEM\_CNTL3\_STATE & ROX  & "00" & The coded state of this command.
+
+  \setlength\parindent{24pt}
+  \indent 00 : Idle   \newline
+  \indent 01 : Waiting to send \newline
+  \indent 10 : Waiting for response \newline
+  \indent 11 : Bad response received (good response \indent sends state back to "00") \\
+  29:28 & MEM\_CNTL2\_STATE & ROX  & "00" & Mem\_cntl\_2 coded state (as above). \\
+  27:26 & MEM\_CNTL1\_STATE & ROX  & "00" & Mem\_cntl\_1 coded state (as above). \\
+  25:24 & MEM\_CNTL0\_STATE & ROX  & "00" & Mem\_cntl\_0 coded state (as above). \\
+  23    & MEM\_CNTL\_BAD\_RESP & ROX & '0' & Unexpected mem\_cntl\_done response received. \\
+  22:21 & reserved            & RO  & "000" & not used \\
+  20    & MEM\_CNTL3\_RST   & WO   & '0'   & Write 1 to reset mem\_cntl logic. \\
+  19:16 & MEM\_CNTL3\_FLAG  & RW   & "0000" & The 4 bit flag value to be sent. \\
+  15:12 & MEM\_CNTL2\_FLAG  & RW   & "0000" & The 4 bit flag value to be sent. \\
+  11:8  & MEM\_CNTL1\_FLAG  & RW   & "0000" & The 4 bit flag value to be sent. \\
+  7:4   & MEM\_CNTL0\_FLAG  & RW   & "0000" & The 4 bit flag value to be sent. \\
+  3     & MEM\_CNTL3\_SEND  & W0   & '0'    & Write '1' to send mem\_cntl\_3. \\
+  2     & MEM\_CNTL2\_SEND  & W0   & '0'    & Write '1' to send mem\_cntl\_2. \\
+  1     & MEM\_CNTL1\_SEND  & W0   & '0'    & Write '1' to send mem\_cntl\_1. \\
+  0     & MEM\_CNTL0\_SEND  & W0   & '0'    & Write '1' to send mem\_cntl\_0. \\
+\end{tabularx}
+
+% OpenCAPI BAR
+\subsubsection{OpenCAPI BAR}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & OPENCAPI\_BAR                            \\
+  Address Offset & \texttt{0x0000C}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_3\_q \\ \hline
+
+  Description &
+  Base Address Register to offset all MMIO commands into the correct address space. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit  & Field Mnemonic & Type & Reset      & Description \\ \hline
+
+  31:0 & O1BARO\_MSB    & RW   & 0xFFFFFFF8 &
+
+  32 most significant bits applied to all MMIO commands passing
+  through the TL. This must match MB\_SIM.MMIO.O1BARO\_msb in the
+  Explorer on each port. \\
+\end{tabularx}
+
+% OpenCAPI DL\_Control
+\subsubsection{OpenCAPI DL\_CONTROL}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & OC\_DLCTL           \\
+  Address Offset & \texttt{0x00010}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_4\_q \\ \hline
+
+  Description &
+  This register provides control bits for various DL functions. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  31    & crc\_err\_persist & WOX   & 0x? & Set this bit to force a persistent CRC error on Apollo transmit side. Eventually the link will go down and be forced to retrain. \\
+  30    & crc\_err\_one\_shot  & WOX & 0x? & Set this bit to cause a CRC error on the next available TL flit \\
+  29    & x4OL\_mode &  RW & 0x0 & Set to 1 to force DL to come up in x4 mode (Lanes 7,5, 2 \& 0) on the next link retrain \\
+  28    & force\_degrade &  RW & 0x0 & set to 1 to force DL to degrade the link on the next link retrain. If in x8 mode (Bit 29 is 0), then the link degrades to x4. If in x4 mode (Bit 29 is 1) then the link degrades to x2. \\
+  27    & degrade\_to\_inside &  RW & 0x0 & This bit is only examined when Bit 28 is set. When 0, the link is degraded to the outside lanes on the next link retrain otherwise the link is degraded to the inside lanes. \newline
+                                            Bit 29=0 Bit 28=1 Bit 27=0 - x8 link is degraded to x4 outside lanes (Lanes 7, 5, 2 \& 0) \newline
+                                            Bit 29=0 Bit 28=1 Bit 27=1 - x8 link is degraded to x4 inside lanes (Lanes 6, 4, 3, \& 1) \newline
+                                            Bit 29=1 Bit 28=1 Bit 27=0 - x4 link is degraded to x2 outside lanes (Lanes 7 \& 0) \newline
+                                            Bit 29=1 Bit 28=1 Bit 27=1 - x4 link is degraded to x2 inside lanes (Lanes 5 \& 2) \\
+  26    & EDPL\_ena &  RW & 0x? & Enable Error Detect Per Lane (EDPL) on both transmit and receive side. On the transmit side the header will be used to indicate the parity
+   of the previous transmitted 64 bits. If the previous bits contained an odd number of 1's, the current header will toggle between b00 and b11 each time an odd number of
+   1's is transmitted. If the previous bits contains an even number of 1's, the current header will be b01. On the receive side, Apollo will check the incoming header for
+    consistent parity with previous 64 received bits. For each lane, Apollo will record the maximum number of parity errors detected within a user-defined time window. If
+     the number of parity errors reaches a user-defined given threshold on any lane, the link will retrain. \\
+  25    & EDPL\_max\_cnt\_reset &  RW & 0x? & Reset the EDPL counters in registers at addresses x05 and x06 which indicate the highest number of parity errors seen per lane within the user-defined time window. \\
+  24    & user\_retrain &  W0 & 0x0 & Force link retrain \\
+  23:20 & reserved &  RO & 0x0 & Function to be added later \\
+  19:16 & TRAINING\_MODE   &  RW  & 0x6 & Mode for Transmit State Machine to be in \newline
+                                          0000 - tx zeros                  \newline
+                                          0001 - tx pattern A              \newline
+                                          0010 - tx pattern B              \newline
+                                          0011 - tx sync pattern           \newline
+                                          0100 - tx training set 1         \newline
+                                          0101 - tx training set 2         \newline
+                                          0110 - tx training set 3         \newline
+                                          0111 - tx training set 0         \newline
+                                          1xxx - enable automatic training \\
+ \end{tabularx}
+
+  \begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  15    & EDPL\_tx\_inj(7) &  W1S & n/a & Inject a parity error on lane 7 transmit side \\
+  14    & EDPL\_tx\_inj(6) &  W1S & n/a & Inject a parity error on lane 6 transmit side \\
+  13    & EDPL\_tx\_inj(5) &  W1S & n/a & Inject a parity error on lane 5 transmit side \\
+  12    & EDPL\_tx\_inj(4) &  W1S & n/a & Inject a parity error on lane 4 transmit side \\
+  11    & EDPL\_tx\_inj(3) &  W1S & n/a & Inject a parity error on lane 3 transmit side \\
+  10    & EDPL\_tx\_inj(2) &  W1S & n/a & Inject a parity error on lane 2 transmit side \\
+  9     & EDPL\_tx\_inj(1) &  W1S & n/a & Inject a parity error on lane 1 transmit side \\
+  8     & EDPL\_tx\_inj(0) &  W1S & n/a & Inject a parity error on lane 0 transmit side \\
+  7     & reserved &  RO & 0x0 & Reserved. Returns zero when read. \\
+  6:4   & EDPL\_thr &  RW & 0x? & Defines an error threshold level. When the number of parity errors seen on a lane within a user-defined time window (see bits 3:0 below) reaches the value encoded, the link will retrain.
+
+  \setlength\parindent{24pt}
+  \indent 0b00 : No Operation   \newline
+  \indent 0b000 = Threshold disabled. No amount of parity \newline \indent \indent errors will trigger a retrain \newline
+  \indent 0b001 = 2 errors  \newline
+  \indent 0b010 = 4 errors  \newline
+  \indent 0b011 = 8 errors  \newline
+  \indent 0b100 = 16 errors \newline
+  \indent 0b101 = 32 errors \newline
+  \indent 0b110 = 64 errors \newline
+  \indent 0b111 = 128 errors \\
+
+  3:0   & EDPL\_tx\_wdw\_val &  RW & 0x? & Defines the time window within which to count parity errors on each lane and compare it to the threshold value defined in bits 6:4.
+
+  \setlength\parindent{24pt}
+  \indent 0b0000 = no time window  \newline
+  \indent 0b0001 = 4 us  \newline
+  \indent 0b0010 = 32 us  \newline
+  \indent 0b0011 = 256 us  \newline
+  \indent 0b0100 = 2 ms \newline
+  \indent 0b0101 = 16 ms \newline
+  \indent 0b0110 = 128 ms \newline
+  \indent 0b0111 = 1 s \newline
+  \indent 0b1000 = 8 s \newline
+  \indent 0b1001 = 64 s \newline
+  \indent 0b1010 = 512 s \newline
+  \indent 0b1011 = 4 ks \newline
+  \indent 0b1100 = 32 ks \newline
+  \indent 0b1101 = 256 ks \newline
+  \indent 0b1110 = 2 Ms \newline
+  \indent 0b1111 = 16 M
+
+\end{tabularx}
+
+
+% OpenCAPI EDPLMAXCNTS0
+\subsubsection{OpenCAPI EDPLMAXCNTS0}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & EDPLMAXCNTS0            \\
+  Address Offset & \texttt{0x00014}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_5\_q \\ \hline
+
+  Description &
+  This RO register gives the highest number of parity errors detected on different lanes. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  31:24 & max\_cnt\_l3  &  RO   & 0x0 & Highest number of parity errors detected on Lane 3 during the time window.\\
+  23:16 & max\_cnt\_l2  &  RO   & 0x0 & Highest number of parity errors detected on Lane 2 during the time window.\\
+  15:8  & max\_cnt\_l1  &  RO   & 0x0 & Highest number of parity errors detected on Lane 1 during the time window.\\
+  7:0   & max\_cnt\_l0  &  RO   & 0x0 & Highest number of parity errors detected on Lane 0 during the time window.\\
+\end{tabularx}
+
+% OpenCAPI EDPLMAXCNTS1
+\subsubsection{OpenCAPI EDPLMAXCNTS1}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & EDPLMAXCNTS1            \\
+  Address Offset & \texttt{0x00018}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_6\_q \\ \hline
+
+  Description &
+  This RO register gives the highest number of parity errors detected on different lanes. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  31:24 & max\_cnt\_l7  &  RO   & 0x0 & Highest number of parity errors detected on Lane 7 during the time window.\\
+  23:16 & max\_cnt\_l6  &  RO   & 0x0 & Highest number of parity errors detected on Lane 6 during the time window.\\
+  15:8  & max\_cnt\_l5  &  RO   & 0x0 & Highest number of parity errors detected on Lane 5 during the time window.\\
+  7:0   & max\_cnt\_l4  &  RO   & 0x0 & Highest number of parity errors detected on Lane 4 during the time window.\\
+\end{tabularx}
+
+% OpenCAPI EDPLERR
+\subsubsection{OpenCAPI EDPLERR}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & EDPLERR          \\
+  Address Offset & \texttt{0x0001C}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_7\_q \\ \hline
+
+  Description &
+  This RO register gives error detection per lane indications. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic    & Type & Reset      & Description \\ \hline
+
+  31:24 & reserved  &  RO   & 0x0 & reserved. Returns zero when read. \\
+  7     & EDPL\_err\_l7 &  RO   & 0x0 & Parity error detected on Lane 7. \\
+  6     & EDPL\_err\_l6 &  RO   & 0x0 & Parity error detected on Lane 6. \\
+  5     & EDPL\_err\_l5 &  RO   & 0x0 & Parity error detected on Lane 5. \\
+  4     & EDPL\_err\_l4 &  RO   & 0x0 & Parity error detected on Lane 4. \\
+  3     & EDPL\_err\_l3 &  RO   & 0x0 & Parity error detected on Lane 3. \\
+  2     & EDPL\_err\_l2 &  RO   & 0x0 & Parity error detected on Lane 2. \\
+  1     & EDPL\_err\_l1 &  RO   & 0x0 & Parity error detected on Lane 1. \\
+  0     & EDPL\_err\_l0 &  RO   & 0x0 & Parity error detected on Lane 0. \\
+\end{tabularx}
+
+% OpenCAPI DL_STATUS0
+\subsubsection{OpenCAPI DL\_STATUS0}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & DL\_STATUS0                              \\
+  Address Offset & \texttt{0x00020}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_8\_q \\ \hline
+
+  Description &
+  Miscellaneous DL debug signals. Register 1 out of 3. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit  & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:4 & DEBUG\_VECTOR  & RO   & 0x0   & Other signals for debug. Signal set is not finalized and thus is not documented completely here. \\
+  3    & LINK\_UP       & RO   & 0x0   & Link is currently up and not retraining.            \\
+  2:0  & TSM\_Q         & RO   & 0x0   & Current value of training / transmit state machine. \\
+\end{tabularx}
+
+% OpenCAPI DL_STATUS1
+\subsubsection{OpenCAPI DL\_STATUS1}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & DL\_STATUS1                              \\
+  Address Offset & \texttt{0x00024}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_9\_q \\ \hline
+
+  Description &
+  Miscellaneous DL debug signals. Register 2 out of 3. \
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit  & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:0 & DEBUG\_VECTOR  & RO   & 0x0   & Other signals for debug. Signal set is not finalized and thus is not documented completely here. \\
+\end{tabularx}
+
+% OpenCAPI DL_STATUS2
+\subsubsection{OpenCAPI DL\_STATUS2}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & DL\_STATUS2                              \\
+  Address Offset & \texttt{0x00028}                         \\
+  VHDL Name      & oc\_host\_cfg0.host\_cfg\_regs.reg\_A\_q \\ \hline
+
+  Description &
+  Miscellaneous DL debug signals. Register 3 out of 3. \\
+
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit  & Field Mnemonic & Type & Reset & Description \\ \hline
+
+  31:4 & Reserved       & RO   & 0x0   & Reserved 0. \\
+  3:0  & DEBUG\_VECTOR  & RO   & 0x0   & Other signals for debug. Signal set is not finalized and thus is not documented completely here. \\
+\end{tabularx}

@@ -115,6 +115,7 @@ parameter GEMINI_NOT_APOLLO = 0
 ,rx_tx_EDPL_thres_reached                  // -- <  input [7:0]
 ,tx_rx_EDPL_cntr_reset                // -- >  output
 ,ltch_lane_cfg                 // -- output
+,dl_debug_vector
                             
 //-- ,gnd                           // -- <> inout             
 //-- ,vdn                           // -- <> inout        
@@ -215,6 +216,7 @@ input             dlx_clk;
 input [7:0]       rx_tx_EDPL_thres_reached;
 output            tx_rx_EDPL_cntr_reset;
 output            ltch_lane_cfg;
+output [127:0]     dl_debug_vector;
 
 //-- inout gnd;
 //-- (* GROUND_PIN="1" *)
@@ -285,6 +287,7 @@ wire [7:0]      gb_reg_update;
 wire            EDPL_ena;
 wire [3:0]      EDPL_time_window_enc;
 wire            EDPL_max_cnt_reset;
+wire [3:0]      dl_manual_training_state;
 
 wire    main_x8;
 wire    main_x4;
@@ -317,6 +320,7 @@ assign gb_reg_update = (~gb_reg_hwwe[7:0]) & reg_val[15:8];
 assign EDPL_ena = reg_val[26];
 assign EDPL_time_window_enc = reg_val[3:0];
 assign EDPL_max_cnt_reset = reg_val[25];
+assign dl_manual_training_state = reg_val[19:16];
 
 assign no_one_home = 64'b0;
   
@@ -391,13 +395,17 @@ ocx_dlx_tx_ctl #(.GEMINI_NOT_APOLLO(GEMINI_NOT_APOLLO)) ctl (
     ,.x8_degrade_to_inside                 (main_x8_degrade_to_inside)
     ,.x4_degrade_to_outside                (main_x4_degrade_to_outside)
     ,.x4_degrade_to_inside                 (main_x4_degrade_to_inside)
+    ,.dl_manual_training_state             (dl_manual_training_state)
+    //,.force_degrade                        (1'b0) // -- < input Tie zero for now
+    //,.degrade_to_inside                    (1'b0) // -- < input Tie zero for now
     ,.ltch_lane_cfg                        (ltch_lane_cfg)
     ,.EDPL_ena                             (EDPL_ena)
     ,.EDPL_time_window_enc                 (EDPL_time_window_enc)
     ,.EDPL_max_cnt_reset                   (EDPL_max_cnt_reset)
     ,.rx_tx_EDPL_thres_reached                  (rx_tx_EDPL_thres_reached)
     ,.tx_rx_EDPL_cntr_reset                (tx_rx_EDPL_cntr_reset)
-    ,.ctl_reg_hwwe                         (ctl_reg_hwwe)                       
+    ,.ctl_reg_hwwe                         (ctl_reg_hwwe)
+    ,.dl_debug_vector                      (dl_debug_vector)
     );
 
 ocx_dlx_tx_flt flt (

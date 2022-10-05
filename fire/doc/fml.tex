@@ -1,0 +1,383 @@
+\section{Fire Miscellaneous Library (FML)} \label{section_fml}
+
+\subsection{Overview}
+Fire Miscellaneous Library (FML) serves simply as a small register
+space for registers in the design that don't fit anywhere else. See
+register section below for any details.
+
+\subsection{Registers}
+
+% Fire Version
+\subsubsection{Fire Version}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & FIRE\_VERSION                       \\
+  Address Offset & \texttt{0x00}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_00\_q \\ \hline
+
+  Description &
+  Version information and unique hash for fire. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset    & Description \\ \hline
+
+  31:29 & Reserved                & RW   & 0        &
+
+  Reserved 0. \\
+
+  28    & DIRTY                   & RW   & 0        &
+
+  This bit is set if a design was locally modified before building the
+  FPGA image. If this bit is set, it means the current image contains
+  changes not committed to version control. \\
+
+  27:0  & VERSION\_CONTROL\_HASH  & RW   & Non-zero &
+
+  Hash corresponding to the git commit the current image is build
+  from. This is unique among all FPGA images. \\
+\end{tabularx}
+
+% Reset Control
+\subsubsection{Reset Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & RESET\_CONTROL                      \\
+  Address Offset & \texttt{0x04}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_01\_q \\ \hline
+
+  Description &
+  Control reset signals for attached OMI devices. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset & Description \\ \hline
+
+  31:6  & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  5     & DDIMMS\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to socketed OMI device. \\
+
+  4     & DDIMMW\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to OMI device in wrap connector. \\
+
+  3     & DDIMMA\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to OMI device in connector A. \\
+
+  2     & DDIMMB\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to OMI device in connector B. \\
+
+  1     & DDIMMC\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to OMI device in connector C. \\
+
+  0     & DDIMMD\_RESETN          & RW   & 1     &
+
+  Value of resetn being driven to OMI device in connector D. \\
+\end{tabularx}
+
+% LED Control
+\subsubsection{LED Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & LED\_CONTROL                        \\
+  Address Offset & \texttt{0x08}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_02\_q \\ \hline
+
+  Description &
+  Software control of some LEDs on Apollo board. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic          & Type & Reset & Description \\ \hline
+
+  31:18 & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  17    & LED\_DDIMMW\_RED        & RW   & 0     &
+
+  If software override is enabled, control red LED associated with wrap connector (1 = ON). \\
+
+  16    & LED\_DDIMMW\_GREEN      & RW   & 0     &
+
+  If software override is enabled, control green LED associated with wrap connector (1 = ON). \\
+
+  15:14 & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  13    & LED\_DDIMMA\_RED        & RW   & 0     &
+
+  If software override is enabled, control red LED associated with connector A (1 = ON). \\
+
+  12    & LED\_DDIMMA\_GREEN      & RW   & 0     &
+
+  If software override is enabled, control green LED associated with connector A (1 = ON). \\
+
+  11:10 & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  9     & LED\_DDIMMB\_RED        & RW   & 0     &
+
+  If software override is enabled, control red LED associated with connector B (1 = ON). \\
+
+  8     & LED\_DDIMMB\_GREEN      & RW   & 0     &
+
+  If software override is enabled, control green LED associated with connector B (1 = ON). \\
+
+  7:6   & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  5     & LED\_DDIMMC\_RED        & RW   & 0     &
+
+  If software override is enabled, control red LED associated with connector C (1 = ON). \\
+
+  4     & LED\_DDIMMC\_GREEN      & RW   & 0     &
+
+  If software override is enabled, control green LED associated with connector C (1 = ON). \\
+
+  3:2   & Reserved                & RW   & 0     &
+
+  Reserved 0. \\
+
+  1     & LED\_DDIMMD\_RED        & RW   & 0     &
+
+  If software override is enabled, control red LED associated with connector D (1 = ON). \\
+
+  9     & LED\_DDIMMD\_GREEN      & RW   & 0     &
+
+  If software override is enabled, control green LED associated with connector D (1 = ON). \\
+\end{tabularx}
+
+% LED Override
+\subsubsection{LED Override}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & LED\_OVERRIDE                       \\
+  Address Offset & \texttt{0x0C}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_03\_q \\ \hline
+
+  Description &
+  Override to allow software control of LEDs using LED\_CONTROL. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic                   & Type & Reset & Description \\ \hline
+
+  31:18 & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  17    & LED\_DDIMMW\_RED\_OVERRIDE\_EN   & RW   & 0     &
+
+  Allow software control of red LED associated with wrap connector using LED\_CONTROL. Otherwise use hardware value. \\
+
+  16    & LED\_DDIMMW\_GREEN\_OVERRIDE\_EN & RW   & 0     &
+
+  Allow software control of green LED associated with wrap connector using LED\_CONTROL. Otherwise use hardware value. \\
+
+  15:14 & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  13    & LED\_DDIMMA\_RED\_OVERRIDE\_EN   & RW   & 0     &
+
+  Allow software control of red LED associated with connector A using LED\_CONTROL. Otherwise use hardware value. \\
+
+  12    & LED\_DDIMMA\_GREEN\_OVERRIDE\_EN & RW   & 0     &
+
+  Allow software control of green LED associated with connector A using LED\_CONTROL. Otherwise use hardware value. \\
+
+  11:10 & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  9     & LED\_DDIMMB\_RED\_OVERRIDE\_EN   & RW   & 0     &
+
+  Allow software control of red LED associated with connector B using LED\_CONTROL. Otherwise use hardware value. \\
+
+  8     & LED\_DDIMMB\_GREEN\_OVERRIDE\_EN & RW   & 0     &
+
+  Allow software control of green LED associated with connector B using LED\_CONTROL. Otherwise use hardware value. \\
+
+  7:6   & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  5     & LED\_DDIMMC\_RED\_OVERRIDE\_EN   & RW   & 0     &
+
+  Allow software control of red LED associated with connector C using LED\_CONTROL. Otherwise use hardware value. \\
+
+  4     & LED\_DDIMMC\_GREEN\_OVERRIDE\_EN & RW   & 0     &
+
+  Allow software control of green LED associated with connector C using LED\_CONTROL. Otherwise use hardware value. \\
+
+  3:2   & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  1     & LED\_DDIMMD\_RED\_OVERRIDE\_EN   & RW   & 0     &
+
+  Allow software control of red LED associated with connector D using LED\_CONTROL. Otherwise use hardware value. \\
+
+  0     & LED\_DDIMMD\_GREEN\_OVERRIDE\_EN & RW   & 0     &
+
+  Allow software control of green LED associated with connector D using LED\_CONTROL. Otherwise use hardware value. \\
+\end{tabularx}
+
+% JTAG Mux Control
+\subsubsection{JTAG Mux Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & JTAG\_MUX\_CONTROL                  \\
+  Address Offset & \texttt{0x10}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_04\_q \\ \hline
+
+  Description &
+  Used to control the JTAG/EJTAG mux selects. Use this register to
+  route the JTAG/EJTAG header (blue) on the Apollo board to a valid
+  JTAG/EJTAG target location on the Apollo board. Do not select more
+  than one bit at a time. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic                   & Type & Reset & Description \\ \hline
+
+  31:6  & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  5     & EXPLORER\_MUX\_SELECT            & RW   & 0     &
+
+  Connect the Explorer Socket to the JTAG header. \\
+
+  4     & DDIMMW\_MUX\_SELECT              & RW   & 0     &
+
+  Connect DDIMM W to the JTAG header. \\
+
+  3     & DDIMMA\_MUX\_SELECT              & RW   & 1     &
+
+  Connect DDIMM A to the JTAG header. \\
+
+  2     & DDIMMB\_MUX\_SELECT              & RW   & 0     &
+
+  Connect DDIMM B to the JTAG header. \\
+
+  1     & DDIMMC\_MUX\_SELECT              & RW   & 0     &
+
+  Connect DDIMM C to the JTAG header. \\
+
+  0     & DDIMMD\_MUX\_SELECT              & RW   & 0     &
+
+  Connect DDIMM D to the JTAG header. \\
+\end{tabularx}
+
+% UART Mux Control
+\subsubsection{UART Mux Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & UART\_MUX\_CONTROL                  \\
+  Address Offset & \texttt{0x14}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_05\_q \\ \hline
+
+  Description &
+  Used to control the UART mux selects. Use this register to route the
+  debug headers on the Apollo board to the CP2105 (Mini USB) or one of
+  two TRS3122 (RS232 3 pin headers, two of them) locations on the
+  Apollo board. Do not select more than one UART source at a time. Do
+  not select more than one external interface (CP2105 or TRS3122) at a
+  time.
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic                   & Type & Reset & Description \\ \hline
+
+  31:9  & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  8     & MINIUSB\_RESETN                  & RW   & 1     &
+
+  Controls reset\_n to the Mini USB Controller. \\
+
+  7     & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  6     & IN\_SEL\_UART\_EXPLORER          & RW   & 0     &
+
+  Source UART from Explorer Socket. \\
+
+  5     & IN\_SEL\_UART\_JDEBUG\_ABW       & RW   & 1     &
+
+  Source UART from ports A/B/W. \\
+
+  4     & IN\_SEL\_UART\_JDEBUG\_CD        & RW   & 0     &
+
+  Source UART from ports C/D. \\
+
+  3     & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  2     & OUT\_SEL\_CP2105\_ROUT2          & RW   & 1     &
+
+  Route UART to the CP2105 (Mini USB). \\
+
+  1     & OUT\_SEL\_TRS3122\_ ROUT1        & RW   & 0     &
+
+  Route UART to TRS3122 ROUT1 (one of the RS232 3-pin headers). \\
+
+  0     & OUT\_SEL\_TRS3122\_ ROUT0        & RW   & 0     &
+
+  Route UART to TRS3122 ROUT0 (one of the RS232 3-pin headers). \\
+\end{tabularx}
+
+% Explorer Static IO Control
+\subsubsection{Explorer Static IO Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & EXPLORER\_STATIC\_IO\_CONTROL       \\
+  Address Offset & \texttt{0x18}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_06\_q \\ \hline
+
+  Description &
+  Used to control the state of static IO pins on the Explorer module
+  such as bootstrap IO. \\
+\end{tabular}
+\\
+\begin{tabularx}{\textwidth}{r|l|l|l|X}
+  \hline
+  Bit   & Field Mnemonic                   & Type & Reset & Description \\ \hline
+
+  31:2  & Reserved                         & RW   & 0     &
+
+  Reserved 0. \\
+
+  1     & CPU\_BOOT\_0                     & RW   & 1     &
+
+  Value of CPU\_BOOT\_0 pin. \\
+
+  0     & CPU\_BOOT\_1                     & RW   & 0     &
+
+  Value of CPU\_BOOT\_1 pin. \\
+\end{tabularx}
+
+% DDIMM Static IO Control
+\subsubsection{DDIMM Static IO Control}
+\begin{tabular}{ r | p{350px} }
+  Mnemonic       & DDIMM\_STATIC\_IO\_CONTROL          \\
+  Address Offset & \texttt{0x1C}                       \\
+  VHDL Name      & fire\_fml\_mac.fml\_regs.reg\_07\_q \\ \hline
+
+  Description &
+  Not implemented. Reserved for future use. \\
+\end{tabular}

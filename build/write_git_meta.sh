@@ -10,11 +10,11 @@ set -eu
 cd $(dirname "$(readlink -f "$0")")
 
 # Grab 28 bits of hash
-SHORT_HASH=$(/opt/xsite/cte/tools/git/latest/bin/git rev-parse --short=7 HEAD)
+SHORT_HASH=$(git rev-parse --short=7 HEAD)
 echo -n "Writing meta files for commit ${SHORT_HASH}"
 
 # Check if there are any modified or staged files
-if ! /opt/xsite/cte/tools/git/latest/bin/git diff-index --quiet HEAD --; then
+if ! git diff-index --quiet HEAD --; then
     DIRTY=1
     echo "-dirty"
 else
@@ -23,12 +23,20 @@ else
 fi
 
 # Meta Version Register:
-#   BIT    31 = Reserved
-#   Bit    30 = Reserved
-#   Bit    29 = Reserved
+#   BIT 31:29 = was Reserved but are now defined to enter frequency into design code
+#   Bit 31:29 = 001=21.33GBPS - 010=23.46GBPS - 011=25.6GBPS
+#             - 000 + 100 to 111=unsupported
 #   Bit    28 = dirty (1 if repository has untracked or staged changes, 0 otherwise)
 #   Bits 27:0 = 7 character git hash
-QUALIFIER_FIELD=$(printf "%x" $((DIRTY * 1)))
+if [ ${OMI_FREQ} -eq 333 ]; then
+ #Bit 31:29 = 001=21.33GBPS > SPEED_FIELD=2 (1 <<1)
+ SPEED_FIELD=2
+else
+ #Bit 31:29 = 011=25.6GBPS > SPEED_FIELD=6 (4 <<1)
+ SPEED_FIELD=6
+fi
+DIRTY_FIELD=${SPEED_FIELD}+${DIRTY}
+QUALIFIER_FIELD=$(printf "%x" $((DIRTY_FIELD * 1)))
 META_REGISTER_VALUE="${QUALIFIER_FIELD}${SHORT_HASH}"
 
 META_REGISTER_VERILOG_DEFINE="\`define FIRE_ICE_META_VERSION 32'h${META_REGISTER_VALUE}"
@@ -56,16 +64,10 @@ VHDL_HEADER="-- ${HEADER_TEXT}"
 # own line in the for loop to make diffs look good.
 echo
 for file in \
-    ../vhdl/meta_pkg.vhdl \
+    ../fire/src/vhdl/meta_pkg.vhdl \
     ; do
     echo "${VHDL_HEADER}" > $file
     echo "${META_REGISTER_VHDL_CONSTANT}" >> $file
     echo "Updated ${file}"
 done
 
-for file in \
-    ; do
-    echo "${VERILOG_HEADER}" > $file
-    echo "${META_REGISTER_VERILOG_DEFINE}" >> $file
-    echo "Updated ${file}"
-done

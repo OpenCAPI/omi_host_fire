@@ -152,7 +152,7 @@ wire           force_val_out;
 wire           forced_valid_din;
 reg            forced_valid_q;
 //Recal Status
-(*mark_debug = "true" *)reg  [1:0]     sf_recal_status_q;
+reg  [1:0]     sf_recal_status_q;
 wire [1:0]     sf_recal_status_din;
 
 // Force to turn off crc checking

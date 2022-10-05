@@ -18,3 +18,15 @@ sed -e 's/DLx_phy_example_wrapper/DLx_phy_example_wrapper0/' \
 # Preparing second DDIMM attachment
 sed -e 's/DLx_phy_example_wrapper/DLx_phy_example_wrapper1/' \
     -e 's/module DLx_phy_example_top /module dlx_phy_wrap1/' ./dlx_phy_wrap_ref.v > dlx_phy_wrap1.v
+
+if [ -d "../../../ip_created_for_fire/gtwizard_ultrascale_2" ]; then
+# Preparing third DDIMM attachment if any
+sed -e 's/DLx_phy_example_wrapper/DLx_phy_example_wrapper2/' \
+    -e 's/module DLx_phy_example_top /module dlx_phy_wrap2/' ./dlx_phy_wrap_ref.v > dlx_phy_wrap2.v
+fi
+
+if [ -d "../../../ip_created_for_fire/gtwizard_ultrascale_3" ]; then
+# Preparing forth DDIMM attachment if any
+sed -e 's/DLx_phy_example_wrapper/DLx_phy_example_wrapper3/' \
+    -e 's/module DLx_phy_example_top /module dlx_phy_wrap3/' ./dlx_phy_wrap_ref.v > dlx_phy_wrap3.v
+fi

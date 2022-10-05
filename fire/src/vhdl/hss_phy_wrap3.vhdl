@@ -23,7 +23,7 @@ use ieee.std_logic_1164.all;
 use ibm.synthesis_support.all;
 use support.logic_support_pkg.all;
 
-entity hss_phy_wrap1 is
+entity hss_phy_wrap3 is
   port (
     -- Differential reference clock inputs
     mgtrefclk0_x0y0_p : in std_ulogic;
@@ -156,14 +156,14 @@ entity hss_phy_wrap1 is
     hb_gtwiz_reset_all_in         : out std_ulogic
     );
 
-  attribute BLOCK_TYPE of hss_phy_wrap1 : entity is SOFT;
-  attribute BTR_NAME of hss_phy_wrap1 : entity is "HSS_PHY_WRAP1";
-  attribute RECURSIVE_SYNTHESIS of hss_phy_wrap1 : entity is 2;
-end hss_phy_wrap1;
+  attribute BLOCK_TYPE of hss_phy_wrap3 : entity is SOFT;
+  attribute BTR_NAME of hss_phy_wrap3 : entity is "HSS_PHY_WRAP3";
+  attribute RECURSIVE_SYNTHESIS of hss_phy_wrap3 : entity is 2;
+end hss_phy_wrap3;
 
-architecture hss_phy_wrap1 of hss_phy_wrap1 is
+architecture hss_phy_wrap3 of hss_phy_wrap3 is
 
-  component dlx_phy_wrap1
+  component dlx_phy_wrap3
     port (
       -- Differential reference clock inputs
       mgtrefclk0_x0y0_p : in std_ulogic;
@@ -314,7 +314,7 @@ architecture hss_phy_wrap1 of hss_phy_wrap1 is
 
 begin
 
-  hss_phy : component dlx_phy_wrap1
+  hss_phy : component dlx_phy_wrap3
     port map (
 
    -- // IBERT Logic
@@ -466,4 +466,4 @@ begin
       hb_gtwiz_reset_all_in         => hb_gtwiz_reset_all_in
     );
 
-end hss_phy_wrap1;
+end hss_phy_wrap3;

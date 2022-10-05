@@ -3,6 +3,7 @@ rm .OMI_IPs*
 rm -rf ../ip_created_for*
 rm -rf fire*
 rm -rf .Xil
+rm -rf .ip_user_files
 rm -rf ip_dir
 rm *.log
 rm *.jou

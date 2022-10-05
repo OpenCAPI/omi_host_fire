@@ -46,7 +46,7 @@ sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
 #    -e '/txprgdivresetdone_out                   (txprgdivresetdone_out)/d';a\,.rxpolarity_in                           (rxpolarity_in)\
 
 sed -i '/assign gtwiz_userclk_rx_active_out = gtwiz_userclk_tx_active_int;/r adding1' DLx_phy_example_wrapper_ref.v
-echo "ref wrapper writen"
+echo "ref wrapper written"
 
 #    -e "/txoutclk_int/a  wire gtwiz_userclk_tx_active_int"\    
 # Tuning the reference wrapper for port 0
@@ -58,6 +58,19 @@ sed -e 's/module DLx_phy_example_wrapper/module DLx_phy_example_wrapper0/'\
 sed -e 's/module DLx_phy_example_wrapper/module DLx_phy_example_wrapper1/'\
     -e 's/DLx_phy DLx_phy_inst (/gtwizard_ultrascale_1 DLx_phy_inst (/g' \
      DLx_phy_example_wrapper_ref.v > ./DLx_phy_example_wrapper1.v
+
+# Tuning the reference wrapper for port 2
+if [ -d "../../../ip_created_for_fire/gtwizard_ultrascale_2" ]; then 
+sed -e 's/module DLx_phy_example_wrapper/module DLx_phy_example_wrapper2/'\
+    -e 's/DLx_phy DLx_phy_inst (/gtwizard_ultrascale_2 DLx_phy_inst (/g' \
+     DLx_phy_example_wrapper_ref.v > ./DLx_phy_example_wrapper2.v
+fi
+# Tuning the reference wrapper for port 3
+if [ -d "../../../ip_created_for_fire/gtwizard_ultrascale_3" ]; then 
+sed -e 's/module DLx_phy_example_wrapper/module DLx_phy_example_wrapper3/'\
+    -e 's/DLx_phy DLx_phy_inst (/gtwizard_ultrascale_3 DLx_phy_inst (/g' \
+     DLx_phy_example_wrapper_ref.v > ./DLx_phy_example_wrapper3.v
+fi
 
 # AC : the following is actually just a simple copy
 sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \

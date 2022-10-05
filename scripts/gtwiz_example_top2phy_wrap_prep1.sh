@@ -17,16 +17,18 @@
 
 sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
 -e "/DONT_TOUCH/d" \
--e "/input  wire mgtrefclk0_x0y7_n,/a\\
+-e 's/mgtrefclk0_x0y6/mgtrefclk0_x0y0/g' \
+-e 's/mgtrefclk0_x0y7/mgtrefclk0_x0y1/g' \
+-e 's/mgtrefclk0_x0y5/mgtrefclk0_x0y1/g' \
+-e 's/MGTREFCLK0_X0Y6/MGTREFCLK0_X0Y0/g' \
+-e 's/MGTREFCLK0_X0Y7/MGTREFCLK0_X0Y1/g' \
+-e 's/MGTREFCLK0_X0Y5/MGTREFCLK0_X0Y1/g' \
+-e "/input  wire mgtrefclk0_x0y1_n,/a\\
     \n  \/\/ Clocking\n\
   output wire cclk,\n\
   output wire rclk,\n\
   input  wire hb_gtwiz_reset_clk_freerun_buf_int,\n\
   output wire tx_clk_402MHz,\n"  \
--e 's/mgtrefclk0_x0y6/mgtrefclk0_x0y0/g' \
--e 's/mgtrefclk0_x0y7/mgtrefclk0_x0y1/g' \
--e 's/MGTREFCLK0_X0Y6/MGTREFCLK0_X0Y0/g' \
--e 's/MGTREFCLK0_X0Y7/MGTREFCLK0_X0Y1/g' \
 -e "/wire \[0\:\0] gtwiz_userclk_rx_usrclk_int/,+2 s/^/\/\//" \
 -e "/wire \[0\:\0] hb0_gtwiz_userclk_rx_usrclk2_int/,+1 s/^/\/\//" \
 -e "/input  wire hb_gtwiz_reset_clk_freerun_in/,+3 s/^/\/\//" \
@@ -109,6 +111,18 @@ sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
    \.o_out  (gtwiz_buffbypass_rx_error_vio_sync[0])\n\
   );\n
 } " ./gtwizard_ultrascale_0_example_top.v  > dlx_phy_wrap_ref.v
+
+# if apollo (identified here because ports are x0y5 and x0y6)) then swap back ports done by the previous sed
+grep -q mgtrefclk0_x0y5_p ./gtwizard_ultrascale_0_example_top.v
+if [ $? -eq 0 ]
+then 
+  sed -i "s/mgtrefclk0_x0y1/mgtrefclk0_x0y2/g" dlx_phy_wrap_ref.v
+  sed -i "s/mgtrefclk0_x0y0/mgtrefclk0_x0y1/g" dlx_phy_wrap_ref.v
+  sed -i "s/mgtrefclk0_x0y2/mgtrefclk0_x0y0/g" dlx_phy_wrap_ref.v
+  sed -i "s/MGTREFCLK0_X0Y1/MGTREFCLK0_X0Y2/g" dlx_phy_wrap_ref.v
+  sed -i "s/MGTREFCLK0_X0Y0/MGTREFCLK0_X0Y1/g" dlx_phy_wrap_ref.v
+  sed -i "s/MGTREFCLK0_X0Y2/MGTREFCLK0_X0Y0/g" dlx_phy_wrap_ref.v
+fi
 
 sed -i "s/wire \[0\:0\] gtwiz_reset_tx_pll_and_datapath_int;/wire \[0\:0\] gtwiz_reset_tx_pll_and_datapath_int = 1\'b0;/" dlx_phy_wrap_ref.v
 

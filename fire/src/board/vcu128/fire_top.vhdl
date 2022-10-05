@@ -32,11 +32,11 @@ entity fire_top is
     -- Clocking & Reset
     ---------------------------------------------------------------------------
     --RAW_RESETN                     : in std_ulogic;
-    RAW_SYSCLK_N                   : in std_ulogic;  -- #TODO connected on VCU to a 100MHz clk - may need an adaptation
+    RAW_SYSCLK_N                   : in std_ulogic;  -- #connected on VCU to a 100MHz clk
     RAW_SYSCLK_P                   : in std_ulogic;
-    RAW_RCLK_N                     : in std_ulogic;  -- #TODO connected on VCU to a 100MHz clk - may need an adaptation
+    RAW_RCLK_N                     : in std_ulogic;  -- #connected on VCU to a 100MHz clk
     RAW_RCLK_P                     : in std_ulogic;
-    OCDE                           : in std_ulogic;    -- #BM: sent to GPIO_LED6 - = 0 if out of reset
+    OCDE                           : in std_ulogic;  -- #sent to GPIO_LED6 For VCU OCDE= 0 if out of reset
     DDIMMA_RESETN                  : out std_ulogic;
     DDIMMB_RESETN                  : out std_ulogic;
 
@@ -80,8 +80,8 @@ entity fire_top is
     ---------------------------------------------------------------------------
     -- FML IO and Mux Logic
     ---------------------------------------------------------------------------
-    fpga_ddimma_mfg_tapsel_i        : in std_ulogic; --Pulled high on the DDIMMs, make this a receiver -- #BM seems active low
-    fpga_ddimmb_mfg_tapsel_i        : in std_ulogic  --Pulled high on the DDIMMs, make this a receiver  -- #BM seems active low
+    fpga_ddimma_mfg_tapsel_i        : in std_ulogic; --Pulled high on the DDIMMs, make this a receiver 
+    fpga_ddimmb_mfg_tapsel_i        : in std_ulogic  --Pulled high on the DDIMMs, make this a receiver
 
     );
 
@@ -771,7 +771,7 @@ architecture fire_top of fire_top is
   signal phy_freerun_clk : std_ulogic;
   signal hb_gtwiz_reset_clk_freerun_buf_int : std_ulogic;
 
-  -- #BM Signals added
+  -- #VCU128 Signals added
   signal  pll_locked                     : std_logic;
   signal  ddimma_resetn_i                : std_ulogic;
   signal  ddimmb_resetn_i                : std_ulogic;
@@ -927,14 +927,14 @@ begin
     
   
  --sys_resetn_int   <= sys_resetn AND sys_resetn_vio;
- ocde_int         <= not(ocde) and sys_resetn_vio and fpga_resetn_vio; --BM: add a not to ocde so that ocde=1 when not in reset
+ ocde_int         <= not(ocde) and sys_resetn_vio and fpga_resetn_vio; --VCU128: add a not to ocde so that ocde=1 when not in reset
 
  --ocde_int         <= sys_resetn_vio;
  --ice_resetn        <= sys_resetn_vio;
  --ice_resetn        <= ocde and sys_resetn_vio and dut_resetn_vio;
  --raw_resetn_int   <= raw_resetn AND NOT dlx_reset;
  --raw_resetn_int   <= NOT dlx_reset3;
- raw_resetn_int   <= NOT dlx_reset0; -- #BM delx_reset3 is not connected in this release
+ raw_resetn_int   <= NOT dlx_reset0; -- #VCU128 delx_reset3 is not connected in this release
 
   counter0 : entity work.counter
     port map (
@@ -1476,14 +1476,14 @@ cclk_d <= '0';
     ddimma_resetn <= ddimma_resetn_i;
     ddimmb_resetn <= ddimmb_resetn_i;
         
-    GPIO_LED_0    <= not(fpga_ddimma_mfg_tapsel_i); --#BM : ON if ddimma is detected
-    GPIO_LED_1    <= ddimma_resetn_i;               --#BM : ON if ddimma is out of reset
-    GPIO_LED_2    <= not(fpga_ddimmb_mfg_tapsel_i); --#BM : ON if ddimmb is detected
-    GPIO_LED_3    <= ddimmb_resetn_i;               --#BM : ON if ddimmb is out of reset
+    GPIO_LED_0    <= not(fpga_ddimma_mfg_tapsel_i); --#VCU128 : ON if ddimma is detected
+    GPIO_LED_1    <= ddimma_resetn_i;               --#VCU128 : ON if ddimma is out of reset
+    GPIO_LED_2    <= not(fpga_ddimmb_mfg_tapsel_i); --#VCU128 : ON if ddimmb is detected
+    GPIO_LED_3    <= ddimmb_resetn_i;               --#VCU128 : ON if ddimmb is out of reset
     GPIO_LED_4    <= '0';
-    GPIO_LED_5    <= raw_resetn_int;                --#BM : ON if raw_reset is out of reset
-    GPIO_LED_6    <= ocde_int;                      --#BM : ON if ocde is out of reset
-    GPIO_LED_7    <= pll_locked;                    --#BM : ON if pll is locked
+    GPIO_LED_5    <= raw_resetn_int;                --#VCU128 : ON if raw_reset is out of reset
+    GPIO_LED_6    <= ocde_int;                      --#VCU128 : ON if ocde is out of reset
+    GPIO_LED_7    <= pll_locked;                    --#VCU128 : ON if pll is locked
 
        
 
@@ -1491,8 +1491,8 @@ fire_fml_mac : entity work.fire_fml_mac
 port map (
     sysclk                   => sysclk                ,
     sys_resetn               => sys_resetn            ,
-    ddimma_resetn            => ddimma_resetn_i       , --BM:add a copy of this signal on GPIO_LED 
-    ddimmb_resetn            => ddimmb_resetn_i       , --BM:add a copy of this signal on GPIO_LED
+    ddimma_resetn            => ddimma_resetn_i       , --VCU128:add a copy of this signal on GPIO_LED 
+    ddimmb_resetn            => ddimmb_resetn_i       , --VCU128:add a copy of this signal on GPIO_LED
     ddimmc_resetn            => ddimmc_resetn         ,
     ddimmd_resetn            => ddimmd_resetn         ,
     ddimmw_resetn            => ddimmw_resetn         ,

@@ -5,6 +5,7 @@
 proc create_FIRE_IPs {} {
     variable OMI_FREQ
     variable DESIGN
+    variable BOARD
     set cwd [file dirname [file normalize [info script]]]
     set ip_dir   $cwd/../ip_created_for_$DESIGN
     if {[catch {file mkdir $ip_dir} err opts] != 0} {
@@ -70,21 +71,34 @@ proc create_FIRE_IPs {} {
 #  export_ip_user_files -of_objects             [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] -no_script >> $log_file  
 #  export_simulation    -of_objects             [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
-
-  if { $OMI_FREQ == "333" } {
-     puts "                        generating IP gtwizard_ultrascale_0  for 333MHz (w/ workaround)"
-  } elseif { $OMI_FREQ == "400" } {
-     puts "                        generating IP gtwizard_ultrascale_0  for 400MHz (w/ workaround)"
-  } else {
-     puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_0"
-     exit
+#=======================================================================================================
+# workaround is a temporary assignment of the tranceivers locations (X0Y31...) during the ip creation.
+# These settings will be overwritten by the correct pins assignment defined in the pins.xdc file.
+# This workaround is needed to have the bits assigned to the tranceiver pin the "right order".
+# This workaround is needed for the vcu128 board and should be compatible for any otherc board.
+#=======================================================================================================
+  if { $BOARD == "vcu128" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for VCU128 (w/ workaround)"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for VCU128 (w/ workaround)"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_0"
+       exit
+    }
+ } elseif { $BOARD == "apollo" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for APOLLO"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for APOLLO"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_0"
+       exit
+    }
   }
   create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gtwizard_ultrascale_0 -dir $ip_dir >> $log_file
   set_property -dict [list                                                               \
                       CONFIG.GT_TYPE {GTY}                                               \
-                      CONFIG.CHANNEL_ENABLE {X0Y31 X0Y30 X0Y29 X0Y28 X0Y27 X0Y26 X0Y25 X0Y24}    \
-                      CONFIG.TX_MASTER_CHANNEL {X0Y31}                                    \
-                      CONFIG.RX_MASTER_CHANNEL {X0Y31}                                    \
                       CONFIG.TX_DATA_ENCODING {64B66B}                                   \
                       CONFIG.TX_USER_DATA_WIDTH {64}                                     \
                       CONFIG.TX_INT_DATA_WIDTH {64}                                      \
@@ -92,11 +106,25 @@ proc create_FIRE_IPs {} {
                       CONFIG.RX_USER_DATA_WIDTH {64}                                     \
                       CONFIG.RX_INT_DATA_WIDTH {64}                                      \
                       CONFIG.RX_JTOL_FC {10}                                             \
-                      CONFIG.RX_CB_MAX_LEVEL {4}                                         \
                       CONFIG.LOCATE_IN_SYSTEM_IBERT_CORE {EXAMPLE_DESIGN}                \
                       CONFIG.TX_OUTCLK_SOURCE {TXPROGDIVCLK}                             \
                       CONFIG.ENABLE_OPTIONAL_PORTS {rxpolarity_in}                       \
                       ] [get_ips gtwizard_ultrascale_0]
+
+  if { $BOARD == "vcu128" } {
+  set_property -dict [list                                                               \
+                      CONFIG.CHANNEL_ENABLE {X0Y31 X0Y30 X0Y29 X0Y28 X0Y27 X0Y26 X0Y25 X0Y24}    \
+                      CONFIG.TX_MASTER_CHANNEL {X0Y31}                                    \
+                      CONFIG.RX_MASTER_CHANNEL {X0Y31}                                    \
+                      ] [get_ips gtwizard_ultrascale_0]
+  } elseif { $BOARD == "apollo" } {
+  set_property -dict [list                                                               \
+                      CONFIG.CHANNEL_ENABLE {X0Y27 X0Y26 X0Y25 X0Y24 X0Y23 X0Y22 X0Y21 X0Y20}    \
+                      CONFIG.TX_MASTER_CHANNEL {X0Y24}                                    \
+                      CONFIG.RX_MASTER_CHANNEL {X0Y24}                                    \
+                      ] [get_ips gtwizard_ultrascale_0]
+  }
+
   if { $OMI_FREQ == "333" } {
     set_property -dict [list                                                             \
                       CONFIG.TX_LINE_RATE {21.333333328}                                 \
@@ -131,20 +159,28 @@ proc create_FIRE_IPs {} {
 
 
 
-  if { $OMI_FREQ == "333" } {
-     puts "                        generating IP gtwizard_ultrascale_1  for 333MHz (w/ workaround)"
-  } elseif { $OMI_FREQ == "400" } {
-     puts "                        generating IP gtwizard_ultrascale_1  for 400MHz (w/ workaround)"
-  } else {
-     puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_1"
-     exit
+  if { $BOARD == "vcu128" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for VCU128 (w/ workaround)"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for VCU128 (w/ workaround)"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_1"
+       exit
+    }
+} elseif { $BOARD == "apollo" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for APOLLO"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for APOLLO"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_1"
+       exit
+    }
   }
   create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gtwizard_ultrascale_1 -dir $ip_dir >> $log_file
   set_property -dict [list                                                               \
                       CONFIG.GT_TYPE {GTY}                                               \
-                      CONFIG.CHANNEL_ENABLE {X0Y23 X0Y22 X0Y21 X0Y20 X0Y19 X0Y18 X0Y17 X0Y16} \
-                      CONFIG.TX_MASTER_CHANNEL {X0Y23}                                   \
-                      CONFIG.RX_MASTER_CHANNEL {X0Y23}                                   \
                       CONFIG.TX_DATA_ENCODING {64B66B}                                   \
                       CONFIG.TX_USER_DATA_WIDTH {64}                                     \
                       CONFIG.TX_INT_DATA_WIDTH {64}                                      \
@@ -152,11 +188,24 @@ proc create_FIRE_IPs {} {
                       CONFIG.RX_USER_DATA_WIDTH {64}                                     \
                       CONFIG.RX_INT_DATA_WIDTH {64}                                      \
                       CONFIG.RX_JTOL_FC {10}                                             \
-                      CONFIG.RX_CB_MAX_LEVEL {4}                                         \
                       CONFIG.LOCATE_IN_SYSTEM_IBERT_CORE {EXAMPLE_DESIGN}                \
                       CONFIG.TX_OUTCLK_SOURCE {TXPROGDIVCLK}                             \
                       CONFIG.ENABLE_OPTIONAL_PORTS {rxpolarity_in}                       \
                       ] [get_ips gtwizard_ultrascale_1]
+
+  if { $BOARD == "vcu128" } {
+    set_property -dict [list                                                               \
+                      CONFIG.CHANNEL_ENABLE {X0Y23 X0Y22 X0Y21 X0Y20 X0Y19 X0Y18 X0Y17 X0Y16} \
+                      CONFIG.TX_MASTER_CHANNEL {X0Y23}                                   \
+                      CONFIG.RX_MASTER_CHANNEL {X0Y23}                                   \
+                      ] [get_ips gtwizard_ultrascale_1]
+  } elseif { $BOARD == "apollo" } {
+    set_property -dict [list                                                               \
+                      CONFIG.CHANNEL_ENABLE {X0Y7 X0Y6 X0Y5 X0Y4 X0Y3 X0Y2 X0Y1 X0Y0}    \
+                      CONFIG.TX_MASTER_CHANNEL {X0Y4}                                    \
+                      CONFIG.RX_MASTER_CHANNEL {X0Y4}                                    \
+                      ] [get_ips gtwizard_ultrascale_1]
+  }
 
   if { $OMI_FREQ == "333" } {
     set_property -dict [list                                                             \
@@ -189,6 +238,125 @@ proc create_FIRE_IPs {} {
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -no_script >> $log_file  
   export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
+# for Apollo board add 2 additional ports
+  if { $BOARD == "apollo" } {
+  if { $OMI_FREQ == "333" } {
+     puts "                        generating IP gtwizard_ultrascale_2  for 333MHz for APOLLO"
+  } elseif { $OMI_FREQ == "400" } {
+     puts "                        generating IP gtwizard_ultrascale_2  for 400MHz for APOLLO"
+  } else {
+     puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_2"
+     exit
+  }
+  create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gtwizard_ultrascale_2 -dir $ip_dir >> $log_file
+  set_property -dict [list                                                               \
+                      CONFIG.GT_TYPE {GTY}                                               \
+                      CONFIG.CHANNEL_ENABLE {X1Y27 X1Y26 X1Y25 X1Y24 X1Y23 X1Y22 X1Y21 X1Y20}    \
+                      CONFIG.TX_MASTER_CHANNEL {X1Y24}                                    \
+                      CONFIG.RX_MASTER_CHANNEL {X1Y24}                                    \
+                      CONFIG.TX_DATA_ENCODING {64B66B}                                   \
+                      CONFIG.TX_USER_DATA_WIDTH {64}                                     \
+                      CONFIG.TX_INT_DATA_WIDTH {64}                                      \
+                      CONFIG.RX_DATA_DECODING {64B66B}                                   \
+                      CONFIG.RX_USER_DATA_WIDTH {64}                                     \
+                      CONFIG.RX_INT_DATA_WIDTH {64}                                      \
+                      CONFIG.RX_JTOL_FC {10}                                             \
+                      CONFIG.LOCATE_IN_SYSTEM_IBERT_CORE {EXAMPLE_DESIGN}                \
+                      CONFIG.TX_OUTCLK_SOURCE {TXPROGDIVCLK}                             \
+                      CONFIG.ENABLE_OPTIONAL_PORTS {rxpolarity_in}                       \
+                      ] [get_ips gtwizard_ultrascale_2]
+  if { $OMI_FREQ == "333" } {
+    set_property -dict [list                                                             \
+                      CONFIG.TX_LINE_RATE {21.333333328}                                 \
+                      CONFIG.TX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.RX_LINE_RATE {21.333333328}                                 \
+                      CONFIG.RX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.TXPROGDIV_FREQ_VAL {333.3333333}                            \
+                      CONFIG.RX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_BUFFER_MODE {0}                                          \
+                      ] [get_ips gtwizard_ultrascale_2]
+
+  } elseif { $OMI_FREQ == "400" } {
+    set_property -dict [list                                                             \
+                      CONFIG.TX_LINE_RATE {25.6}                                         \
+                      CONFIG.TX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.RX_LINE_RATE {25.6}                                         \
+                      CONFIG.RX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.TXPROGDIV_FREQ_VAL {400}                                    \
+                      CONFIG.RX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_BUFFER_MODE {0}                                          \
+                      ] [get_ips gtwizard_ultrascale_2]
+  }
+
+  set_property generate_synth_checkpoint false [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] 
+  generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] >> $log_file  
+  generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] >> $log_file  
+  export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] -no_script >> $log_file  
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+
+
+
+
+  if { $OMI_FREQ == "333" } {
+     puts "                        generating IP gtwizard_ultrascale_3  for 333MHz for APOLLO"
+  } elseif { $OMI_FREQ == "400" } {
+     puts "                        generating IP gtwizard_ultrascale_3  for 400MHz for APOLLO"
+  } else {
+     puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_3"
+     exit
+  }
+  create_ip -name gtwizard_ultrascale -vendor xilinx.com -library ip -version 1.7 -module_name gtwizard_ultrascale_3 -dir $ip_dir >> $log_file
+  set_property -dict [list                                                               \
+                      CONFIG.GT_TYPE {GTY}                                               \
+                      CONFIG.CHANNEL_ENABLE {X1Y7 X1Y6 X1Y5 X1Y4 X1Y3 X1Y2 X1Y1 X1Y0}    \
+                      CONFIG.TX_MASTER_CHANNEL {X1Y4}                                   \
+                      CONFIG.RX_MASTER_CHANNEL {X1Y4}                                   \
+                      CONFIG.TX_DATA_ENCODING {64B66B}                                   \
+                      CONFIG.TX_USER_DATA_WIDTH {64}                                     \
+                      CONFIG.TX_INT_DATA_WIDTH {64}                                      \
+                      CONFIG.RX_DATA_DECODING {64B66B}                                   \
+                      CONFIG.RX_USER_DATA_WIDTH {64}                                     \
+                      CONFIG.RX_INT_DATA_WIDTH {64}                                      \
+                      CONFIG.RX_JTOL_FC {10}                                             \
+                      CONFIG.LOCATE_IN_SYSTEM_IBERT_CORE {EXAMPLE_DESIGN}                \
+                      CONFIG.TX_OUTCLK_SOURCE {TXPROGDIVCLK}                             \
+                      CONFIG.ENABLE_OPTIONAL_PORTS {rxpolarity_in}                       \
+                      ] [get_ips gtwizard_ultrascale_3]
+
+  if { $OMI_FREQ == "333" } {
+    set_property -dict [list                                                             \
+                      CONFIG.TX_LINE_RATE {21.333333328}                                 \
+                      CONFIG.TX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.RX_LINE_RATE {21.333333328}                                 \
+                      CONFIG.RX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.TXPROGDIV_FREQ_VAL {333.3333333}                            \
+                      CONFIG.RX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_BUFFER_MODE {0}                                          \
+                      ] [get_ips gtwizard_ultrascale_3]
+
+  } elseif { $OMI_FREQ == "400" } {
+    set_property -dict [list                                                             \
+                      CONFIG.TX_LINE_RATE {25.6}                                         \
+                      CONFIG.TX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.RX_LINE_RATE {25.6}                                         \
+                      CONFIG.RX_REFCLK_FREQUENCY {133.3333333}                           \
+                      CONFIG.TXPROGDIV_FREQ_VAL {400}                                    \
+                      CONFIG.RX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_REFCLK_SOURCE {}                                         \
+                      CONFIG.TX_BUFFER_MODE {0}                                          \
+                      ] [get_ips gtwizard_ultrascale_3]
+  }
+
+  set_property generate_synth_checkpoint false [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] 
+  generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] >> $log_file  
+  generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] >> $log_file  
+  export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] -no_script >> $log_file  
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+} 
+#end of apollo case adding 2 additional ports
 
 puts "                        Creating a projet example based on gtwizard_ultrascale ..."
 open_example_project -force -dir $ip_dir [get_ips  gtwizard_ultrascale_0]
@@ -209,14 +377,26 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
 
 
 
-  if { $OMI_FREQ == "333" } {
-     puts "                        generating IP clk_wiz_sysclk         for 333MHz"
-  } elseif { $OMI_FREQ == "400" } {
-     puts "                        generating IP clk_wiz_sysclk         for 400MHz"
-  } else {
-     puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
-     exit
+  if { $BOARD == "vcu128" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP clk_wiz_sysclk         for 333MHz for VCU128"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP clk_wiz_sysclk         for 400MHz for VCU128"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
+       exit
+    }
+  } elseif { $BOARD == "apollo" } {
+    if { $OMI_FREQ == "333" } {
+       puts "                        generating IP clk_wiz_sysclk         for 333MHz for APOLLO"
+    } elseif { $OMI_FREQ == "400" } {
+       puts "                        generating IP clk_wiz_sysclk         for 400MHz for APOLLO"
+    } else {
+       puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
+       exit
+    }
   }
+
   create_ip -name clk_wiz -vendor xilinx.com -library ip -version 6.0 -module_name clk_wiz_sysclk  -dir $ip_dir >> $log_file
 
   set_property -dict [list                                                \
@@ -237,8 +417,43 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                     CONFIG.AUTO_PRIMITIVE {PLL}                             \
                     ] [get_ips clk_wiz_sysclk]
 
-  if { $OMI_FREQ == "333" } {
-    set_property -dict [list                                                \
+  if { $BOARD == "apollo" } {
+    if { $OMI_FREQ == "333" } {
+      set_property -dict [list                                                \
+                    CONFIG.PRIM_IN_FREQ {400.000}                           \
+                    CONFIG.CLKIN1_JITTER_PS {25.0}                          \
+                    CONFIG.MMCM_CLKFBOUT_MULT_F {5}                         \
+                    CONFIG.MMCM_CLKIN1_PERIOD {2.500}                       \
+                    CONFIG.MMCM_CLKIN2_PERIOD {10.0}                        \
+                    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {333.33333325}        \
+                    CONFIG.MMCM_DIVCLK_DIVIDE {2}                           \
+                    CONFIG.MMCM_COMPENSATION {AUTO}                         \
+                    CONFIG.MMCM_CLKOUT0_DIVIDE_F {3}                        \
+                    CONFIG.CLKOUT1_JITTER {88.617}                          \
+                    CONFIG.CLKOUT1_PHASE_ERROR {89.971}                     \
+                    ] [get_ips clk_wiz_sysclk]
+    } elseif { $OMI_FREQ == "400" } {
+      set_property -dict [list                                                \
+                    CONFIG.PRIM_IN_FREQ {400.000}                           \
+                    CONFIG.CLKIN1_JITTER_PS {25.0}                          \
+                    CONFIG.MMCM_CLKFBOUT_MULT_F {2}                         \
+                    CONFIG.MMCM_CLKIN1_PERIOD {2.500}                       \
+                    CONFIG.MMCM_CLKIN2_PERIOD {10.0}                        \
+                    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {400.000}             \
+                    CONFIG.MMCM_DIVCLK_DIVIDE {1}                           \
+                    CONFIG.MMCM_COMPENSATION {AUTO}                         \
+                    CONFIG.MMCM_CLKOUT0_DIVIDE_F {2}                        \
+                    CONFIG.CLKOUT1_JITTER {78.612}                          \
+                    CONFIG.CLKOUT1_PHASE_ERROR {89.770}                     \
+                    ] [get_ips clk_wiz_sysclk]
+    }
+  } elseif { $BOARD == "vcu128" } {
+    if { $OMI_FREQ == "333" } {
+      set_property -dict [list                                                \
+                    CONFIG.PRIM_IN_FREQ {100.000}                           \
+                    CONFIG.CLKIN1_JITTER_PS {100.0}                         \
+                    CONFIG.MMCM_CLKIN1_PERIOD {10.000}                      \
+                    CONFIG.MMCM_CLKIN2_PERIOD {10.000}                      \
                     CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {333.33333325}        \
                     CONFIG.MMCM_DIVCLK_DIVIDE {1}                           \
                     CONFIG.MMCM_CLKFBOUT_MULT_F {10}                        \
@@ -248,8 +463,12 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                     CONFIG.CLKOUT1_PHASE_ERROR {98.575}                     \
                     ] [get_ips clk_wiz_sysclk]
 
-  } elseif { $OMI_FREQ == "400" } {
-    set_property -dict [list                                                \
+    } elseif { $OMI_FREQ == "400" } {
+      set_property -dict [list                                                \
+                    CONFIG.PRIM_IN_FREQ {100.000}                           \
+                    CONFIG.CLKIN1_JITTER_PS {100.0}                         \
+                    CONFIG.MMCM_CLKIN1_PERIOD {10.000}                      \
+                    CONFIG.MMCM_CLKIN2_PERIOD {10.000}                      \
                     CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {400.000}             \
                     CONFIG.MMCM_DIVCLK_DIVIDE {1}                           \
                     CONFIG.MMCM_CLKFBOUT_MULT_F {8}                         \
@@ -258,7 +477,9 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                     CONFIG.CLKOUT1_JITTER {111.164}                         \
                     CONFIG.CLKOUT1_PHASE_ERROR {114.212}                    \
                     ] [get_ips clk_wiz_sysclk]
+    }
   }
+
   set_property generate_synth_checkpoint false [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] 
   generate_target {instantiation_template}     [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] >> $log_file  

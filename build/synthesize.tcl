@@ -8,6 +8,7 @@ puts "XILINX_PART is $XILINX_PART"
 # current design
 variable OMI_FREQ $::env(OMI_FREQ)
 variable DESIGN $::env(DESIGN)
+variable BOARD $::env(BOARD)
 
 # Top Level Block
 #  Name of vhdl file with top level of design
@@ -17,6 +18,7 @@ variable TOP_LEVEL $::env(TOP_LEVEL)
 #  Path to source directory containing vhdl/ and verilog/ directories
 #  DLX files are stored separately because they are shared
 variable SRC_DIR $::env(SRC_DIR)
+variable BRD_DIR $::env(BRD_DIR)
 variable DLX_DIR $::env(DLX_DIR)
 
 # GLIB Version
@@ -90,6 +92,7 @@ proc yesNoPrompt {} {
 }
 
 variable DESIGN
+variable BOARD
 
 ################################################################################
 # Create Project
@@ -174,6 +177,7 @@ if { [file exists $OMI_IPs_exist_filename] } {
 
 }
 
+read_vhdl [ glob $BRD_DIR/fire_top.vhdl ]
 read_vhdl [ glob $SRC_DIR/vhdl/*.vhdl ]
 if {( $DESIGN == "ice")} {
   set_property file_type {VHDL 2008} [get_files  $SRC_DIR/vhdl/ice_gmc_arb.vhdl]
@@ -183,7 +187,7 @@ read_verilog [ glob $SRC_DIR/headers/*.v ]
 set_property file_type "Verilog Header" [ get_files [ glob $SRC_DIR/headers/*.v ] ]
 read_verilog [ glob $DLX_DIR/*.v ]
 read_verilog [ glob $SRC_DIR/verilog/*.v ]
-read_xdc [ glob $SRC_DIR/xdc/timing.xdc ]
+read_xdc [ glob $BRD_DIR/timing.xdc ]
 
 ################################################################################
 # Run Synthesis & Generate Reports
@@ -222,9 +226,10 @@ if {[file exists fsm_encoding.os]} {
 # ILA sometimes causes problems, so checkpoint here for easier debug
 write_checkpoint -force $OUTPUT_DIR/pre_ila
 
-source "$cwd/insert_ila.tcl"
-insert_ila
-
+if {( $BOARD == "vcu128")} {
+  source "$cwd/insert_ila.tcl"
+  insert_ila
+}
 write_checkpoint -force $OUTPUT_DIR/post_synth
 report_timing_summary -file $OUTPUT_DIR/post_synth_timing_summary.rpt
 report_power -file $OUTPUT_DIR/post_synth_power.rpt

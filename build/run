@@ -19,24 +19,45 @@ XILINX_VERSION=2018.3.1
 
 CWD=$(dirname $(readlink -f $0))
 if [[ "$1" == "fire" ]] ; then
+# Choose the board and fpga type
     # Alpha Data cards: xcvu3p-ffvc1517-2-i
-    # Apollo Board: xcvu7p-flvc2104-2-e
+
+    # Apollo Board: xcvu7p
+    # export BOARD="apollo"
     # export XILINX_PART="xcvu7p-flvc2104-2-e"
+
+    # VCU128 Board: xcvu37p
+    export BOARD="vcu128"
     export XILINX_PART="xcvu37p-fsvh2892-2-e"
+
+# Choose the frequency
+    # OMI_FREQ is set to 333 for internal logic at 333MHz and OMI links at 21.33GHz
+    # OMI_FREQ is set to 400 for internal logic at 400MHz and OMI links at 25.60GHz (still timing closure issues)
+    export OMI_FREQ="333"
+    # export OMI_FREQ="400"
+
+# Other defined parameters
+    export BRD_DIR="$CWD/../fire/src/board/$BOARD"
     export TOP_LEVEL="fire_top"
     export SRC_DIR="$CWD/../fire/src"
     export DLX_DIR="$CWD/../dlx"
     export OUTPUT_PREFIX="$CWD/fire"
     export DESIGN="fire"
-    export OMI_FREQ="333"
+
 elif [[ "$1" == "ice" ]] ; then
+    # Gemini Board: xczu19eg
     export XILINX_PART="xczu19eg-ffvc1760-2-i"
+    export BRD_DIR="$CWD/../ice/src/board/gemini"
+
+    # Choose the frequency
+    export OMI_FREQ="333"
+
+    # Other defined parameters
     export TOP_LEVEL="ice_top"
     export SRC_DIR="$CWD/../ice/src"
     export DLX_DIR="$CWD/../dlx"
     export OUTPUT_PREFIX="$CWD/ice"
     export DESIGN="ice"
-    export OMI_FREQ="333"
 else
     echo "First argument must be 'fire' or 'ice'; was '$1'"
     exit 1

@@ -19,6 +19,31 @@ limitations under the License.
 The background Specification upon which this is based is managed by and available from
 the OpenCAPI Consortium.  More information can be found at https://opencapi.org.
 
+# Purpose
+
+This FIRE design contains the FPGA code of an OMI host. It has all the features needed to 
+configure, initialize, train and test an OMI DDIMM through OMI links.
+OMI stands for Open Memory Interface. Check OMI web site at https://openmemoryinterface.org
+Friendly documentation providing reference documentation, design and enablement code 
+can also be found at https://opencapi.github.io/omi-doc/
+
+# Hardware requirements
+
+This FIRE design targets as of today 2 boards:
+* __Apollo__ board which is a lab experimentation board (not for distribution)
+    * AMD/Xilinx FPGA __XCVU7P__
+    * 4 ports (x8 OMI links) enabled in this design
+
+* AMD/Xilinx __VCU128__ evaluation board (https://www.xilinx.com/products/boards-and-kits/vcu128.html)
+    * AMD/Xilinx FPGA __XCVU37P__
+    * 2 ports (x8 OMI links) enabled in this design
+    * An adapter Tormem card is required to plug the DDIMMs (https://www.tormem.com/contact)
+Any new board or additional ports can be easily added. Board specific files can be found in ~/fire/src/board/
+
+I2C communication with these boards is done through a RasberryPi.
+AMD/Xilinx Vivado 2018.3 is used to build the FPGA binary images.
+Code is designed for AMD/Xilinx UltraScale+ FPGA family.
+More about enablement on https://opencapi.github.io/omi-doc/blocs/enablement
 
 # FPGA Build Scripts
 
@@ -36,7 +61,7 @@ cd build
 ./run $design gen_bitstream.tcl
 ```
 
-The following command launches for the entire process, with some parallelization:
+The following command launches for the entire process, with some optimization choices:
 
 ```
 ./run_fire.sh

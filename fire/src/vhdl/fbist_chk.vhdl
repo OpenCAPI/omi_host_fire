@@ -96,12 +96,16 @@ entity fbist_chk is
 end fbist_chk;
 
 architecture fbist_chk of fbist_chk is
+   attribute mark_debug : string;
+   attribute keep       : string;
   SIGNAL lut_fetch_addr : std_ulogic_vector(7 downto 0);
   SIGNAL lut_fetch_data : std_ulogic_vector(127 downto 0);
   SIGNAL lut_fetch_valid : std_ulogic;
+        attribute mark_debug of lut_fetch_valid : signal is "true";
   SIGNAL lut_store_addr : std_ulogic_vector(7 downto 0);
   SIGNAL lut_store_data : std_ulogic_vector(127 downto 0);
   SIGNAL lut_store_valid : std_ulogic;
+        attribute mark_debug of lut_store_valid : signal is "true";
   SIGNAL lut_store_valid_v : std_ulogic_vector(3 downto 0);
   SIGNAL lut_store_unused : std_ulogic_vector(127 downto 0);
   SIGNAL lut_command : std_ulogic_vector(7 downto 0);
@@ -202,8 +206,10 @@ architecture fbist_chk of fbist_chk is
   SIGNAL cycles_since_last_response_q : std_ulogic_vector(31 downto 0);
   SIGNAL lut_engine_d : std_ulogic_vector(2 downto 0);
   SIGNAL lut_engine_q : std_ulogic_vector(2 downto 0);
+  attribute mark_debug of lut_engine_q : signal is "true";
   SIGNAL lut_valid_d : std_ulogic;
   SIGNAL lut_valid_q : std_ulogic;
+  attribute mark_debug of lut_valid_q : signal is "true";
 
   --debug latches--
   signal chk_error_valid_d   : std_ulogic;

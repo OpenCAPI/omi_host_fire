@@ -227,8 +227,10 @@ if {[file exists fsm_encoding.os]} {
 write_checkpoint -force $OUTPUT_DIR/pre_ila
 
 if {( $BOARD == "vcu128")} {
-  source "$cwd/insert_ila.tcl"
-  insert_ila
+  #source "$cwd/insert_ila.tcl"
+  #insert_ila
+  ##use predefined signals
+  read_xdc [ glob $BRD_DIR/ila.xdc ]
 }
 write_checkpoint -force $OUTPUT_DIR/post_synth
 report_timing_summary -file $OUTPUT_DIR/post_synth_timing_summary.rpt

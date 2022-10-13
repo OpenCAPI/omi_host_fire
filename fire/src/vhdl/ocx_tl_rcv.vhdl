@@ -110,6 +110,9 @@ entity ocx_tl_rcv is
 
 architecture ocx_tl_rcv of ocx_tl_rcv is
 
+   attribute mark_debug : string;
+   attribute keep       : string;
+
    signal bdi_32B_carrier                              : std_ulogic;
    signal bdi_count_d,bdi_count_q                      : std_ulogic_vector(2 downto 0);
    signal bdi_count_nz_d,bdi_count_nz_q                : std_ulogic;
@@ -132,11 +135,16 @@ architecture ocx_tl_rcv of ocx_tl_rcv is
    signal dec_cred,banana                              : std_ulogic;
    signal dflit_cnt_d,dflit_cnt_q                      : std_ulogic_vector(3 downto 0);
    signal dl_din                                       : std_ulogic_vector(512 downto 0);
+    attribute mark_debug of dl_din : signal is "true";
    signal dl_read,dl_empty                             : std_ulogic;
    signal dl_dout                                      : std_ulogic_vector(512 downto 0);
    signal dl_overf                                     : std_ulogic;
    signal dl_underf                                    : std_ulogic;
-   signal dl_valid,dl_write                            : std_ulogic;
+--   signal dl_valid,dl_write                            : std_ulogic;
+   signal dl_valid                                     : std_ulogic;
+   signal dl_write                                     : std_ulogic;
+    attribute mark_debug of dl_write : signal is "true";
+
    signal ee_0,ee_1,ee_5,ee_9,ee_B                     : std_ulogic;       -- early exit
    signal extended_reset                               : std_ulogic;
    signal finished_ctl                                 : std_ulogic;

@@ -335,10 +335,10 @@ assign          cfg_transmit_order = 1'b0;
 
 assign EDPL_ena = reg_04_val[26];
 assign EDPL_max_cnt_reset = reg_04_val[25];
-assign x4OL_mode = 1'b0;//ln_cfg_q[2];
-assign force_degrade = 1'b0;//ln_cfg_q[1];
-assign degrade_to_inside = 1'b0;//ln_cfg_q[0];
-assign force_retrain = 1'b0;//reg_04_val[24];
+assign x4OL_mode = ln_cfg_q[2];
+assign force_degrade = ln_cfg_q[1];
+assign degrade_to_inside = ln_cfg_q[0];
+assign force_retrain = reg_04_val[24];
 assign EDPL_cfg_err_thres = reg_04_val[6:4];
 assign ln_cfg_din[2:0] = dlx_reset_int ? 3'b000 :
                          ltch_lane_cfg ? reg_04_val[29:27] : ln_cfg_q[2:0];

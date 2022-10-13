@@ -90,7 +90,7 @@ input           rx_reset;               //-- reset command from rx
 
 reg             ln_valid_q     ;         //-- latch input valid signal
 reg  [63:0]     ln_data_q      ;        //-- latch input data
-reg  [1:0]      ln_header_q    ;         //-- latch input header
+(* mark_debug = "TRUE" *) reg  [1:0]      ln_header_q    ;         //-- latch input header
 reg             ln_slip_q      ;         //-- latch output slip command
 reg             need_slip_d1_q ;         //-- need slip two cycles in a row to actually slip
 reg             need_slip_d2_q ;         //-- need slip two cycles in a row to actually slip

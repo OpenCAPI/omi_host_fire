@@ -175,7 +175,8 @@ entity ocx_tlx_wrap is
 end ocx_tlx_wrap;
 
 architecture ocx_tlx_wrap of ocx_tlx_wrap is
-
+   attribute mark_debug : string;
+   attribute keep       : string;
   signal s0_axi_aclk    : std_ulogic;
   signal s0_axi_aresetn : std_ulogic;
   signal s0_axi_awid    : std_ulogic_vector(0 downto 0);
@@ -339,6 +340,7 @@ architecture ocx_tlx_wrap of ocx_tlx_wrap is
   signal tlx_afu_resp_opcode             : std_ulogic_vector(7 downto 0);
   signal tlx_afu_resp_afutag             : std_ulogic_vector(15 downto 0);
   signal tlx_afu_resp_code               : std_ulogic_vector(3 downto 0);
+    attribute mark_debug of tlx_afu_resp_code : signal is "true";
   signal tlx_afu_resp_pg_size            : std_ulogic_vector(5 downto 0);
   signal tlx_afu_resp_dl                 : std_ulogic_vector(1 downto 0);
   signal tlx_afu_resp_dp                 : std_ulogic_vector(1 downto 0);

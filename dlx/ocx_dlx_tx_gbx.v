@@ -88,7 +88,7 @@ module ocx_dlx_tx_gbx (
 
 // -- begin logic here
     wire [1:0]   out_header_din;
-    reg  [1:0]   out_header_q;
+    (* mark_debug = "TRUE" *) reg  [1:0]   out_header_q;
     wire [5:0]   out_seq_din;
     reg  [5:0]   out_seq_q;
     wire [63:0]  out_data_din;

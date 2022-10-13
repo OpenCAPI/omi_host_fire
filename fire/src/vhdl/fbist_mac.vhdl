@@ -59,23 +59,29 @@ entity fbist_mac is
 end fbist_mac;
 
 architecture fbist_mac of fbist_mac is
+   attribute mark_debug : string;
+   attribute keep       : string;
+   
   SIGNAL axi_fifo_full_gate : std_ulogic;
   SIGNAL agen_chk_command : std_ulogic_vector(7 downto 0);
   SIGNAL agen_chk_command_address : std_ulogic_vector(63 downto 0);
   SIGNAL agen_chk_command_engine : std_ulogic_vector(2 downto 0);
   SIGNAL agen_chk_command_tag : std_ulogic_vector(15 downto 0);
   SIGNAL agen_chk_command_valid : std_ulogic;
+   attribute mark_debug of agen_chk_command_valid : signal is "true";
   SIGNAL agen_dgen_command : std_ulogic_vector(7 downto 0);
   SIGNAL agen_dgen_command_address : std_ulogic_vector(63 downto 0);
   SIGNAL agen_dgen_command_engine : std_ulogic_vector(2 downto 0);
   SIGNAL agen_dgen_command_tag : std_ulogic_vector(15 downto 0);
   SIGNAL agen_dgen_command_valid : std_ulogic;
+   attribute mark_debug of agen_dgen_command_valid : signal is "true";
   SIGNAL axi_chk_response : std_ulogic_vector(7 downto 0);
   SIGNAL axi_chk_response_data : std_ulogic_vector(511 downto 0);
   SIGNAL axi_chk_response_tag : std_ulogic_vector(15 downto 0);
   SIGNAL axi_chk_response_dpart : std_ulogic_vector(1 downto 0);
   SIGNAL axi_chk_response_ow : std_ulogic;
   SIGNAL axi_chk_response_valid : std_ulogic;
+   attribute mark_debug of axi_chk_response_valid : signal is "true";
   SIGNAL cgen_agen_command : std_ulogic_vector(7 downto 0);
   SIGNAL cgen_agen_command_engine : std_ulogic_vector(2 downto 0);
   SIGNAL cgen_agen_command_valid : std_ulogic;
@@ -92,8 +98,10 @@ architecture fbist_mac of fbist_mac is
   SIGNAL dgen_axi_command_engine : std_ulogic_vector(2 downto 0);
   SIGNAL dgen_axi_command_tag : std_ulogic_vector(15 downto 0);
   SIGNAL dgen_axi_command_valid : std_ulogic;
+   attribute mark_debug of dgen_axi_command_valid : signal is "true";
   SIGNAL fbist_cfg_pool0_arb_scheme : std_ulogic_vector(3 downto 0);
   SIGNAL fbist_cfg_status_ip : std_ulogic;
+    attribute mark_debug of fbist_cfg_status_ip : signal is "true";
   SIGNAL fbist_cfg_pool0_engine0_address_mode : std_ulogic_vector(7 downto 0);
   SIGNAL fbist_cfg_pool0_engine0_command : std_ulogic_vector(7 downto 0);
   SIGNAL fbist_cfg_pool0_engine1_address_mode : std_ulogic_vector(7 downto 0);

@@ -643,7 +643,7 @@ module ocx_tlx_framer
     reg              send_cmd_dflit               ;
     reg              flit_will_be_sent            ;
     reg              flit_will_be_sent_d2         ;
-    reg              send_flit_now                ;
+    (* mark_debug = "TRUE" *)  reg              send_flit_now                ;
     reg              dlx_tlx_flit_credit_latched  ;
     reg   [  3:0]    dlxcrd_counter_nxt           ;
     reg   [  3:0]    dlxcrd_counter               ;

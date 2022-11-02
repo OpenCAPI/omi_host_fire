@@ -185,10 +185,13 @@ begin
     generic map (
       REG_00_RESET       => FIRE_ICE_META_VERSION,
       REG_01_RESET       => x"0000003F",
+      REG_02_RESET       => x"00000000",
+      REG_03_RESET       => x"00000000",    
       REG_04_RESET       => x"00000008",
       REG_05_RESET       => x"00000124",
       REG_06_RESET       => x"00000002",
       REG_07_RESET       => x"00000000",
+      REG_08_RESET       => x"00000000",
       REG_08_WE_MASK     => x"00000000", -- readonly regs
       REG_08_HWWE_MASK   => x"0000001F"  -- updated by hardware
    --   REG_08_STICKY_MASK => x"0000001F"  -- keep value - no auto self clear to 0

@@ -30,24 +30,24 @@ entity axi_regs_32 is
   generic (
     -- Offset of register block
     offset : natural := 0;
-
-    -- Reset and Initialization Values
-    REG_00_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_01_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_02_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_03_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_04_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_05_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_06_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_07_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_08_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_09_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0A_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0B_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0C_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0D_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0E_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0F_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
+    
+    -- Reset and Initialization Values - init at dec0de00 to report unconnected reg
+    REG_00_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_01_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_02_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_03_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_04_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_05_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_06_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_07_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_08_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_09_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0A_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0B_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0C_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0D_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0E_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0F_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
 
     -- Scom Write Enable Masks
     REG_00_WE_MASK : std_ulogic_vector(31 downto 0) := x"FFFFFFFF";
@@ -222,7 +222,10 @@ architecture axi_regs_32 of axi_regs_32 is
   signal reg_rd_valid_q : std_ulogic;
   signal reg_rd_addr_d  : std_ulogic_vector(31 downto 0);
   signal reg_rd_addr_q  : std_ulogic_vector(31 downto 0);
-
+  signal reg_rd_addr_notmod4_d : std_ulogic;
+  signal reg_rd_addr_notmod4_q : std_ulogic;
+  
+  
   signal axi_wr_state_d     : std_ulogic_vector(4 downto 0);
   signal axi_wr_state_q     : std_ulogic_vector(4 downto 0);
   signal axi_wr_state_ns0_0 : std_ulogic;
@@ -291,6 +294,10 @@ architecture axi_regs_32 of axi_regs_32 is
   signal reg_0F_q : std_ulogic_vector(31 downto 0) := REG_0F_RESET;
   signal read_received : std_ulogic;
 
+  -- to mimic axi bridges behavior when unknown address is accessed
+  signal rd_data_error : std_ulogic_vector(31 downto 0) := x"dec0deff";
+  signal rd_data_oob   : std_ulogic_vector(31 downto 0) := x"dec0de0b";
+
   attribute keep                         : string;
   attribute mark_debug                   : string;
   attribute keep of axi_rd_state_q       : signal is "true";
@@ -349,6 +356,7 @@ begin
   -- OR together the external and built-in registers so we know when the read completes
   read_received <=
          exp_rd_data_valid                                                                                               or
+    (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_notmod4_q                                                ) or
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) or
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) or
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0008#, 32))) or
@@ -364,8 +372,10 @@ begin
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0030#, 32))) or
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0034#, 32))) or
     (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0038#, 32))) or
-    (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#003C#, 32)));
+    (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#003C#, 32))) or 
+    (not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q > std_ulogic_vector(to_unsigned(offset + 16#003C#, 32)));
 
+  
   -----------------------------------------------------------------------------
   -- Read Transaction State Machine
   -----------------------------------------------------------------------------
@@ -479,30 +489,37 @@ begin
   axi_wr_state_d(3) <= axi_wr_state_ns0_3 or axi_wr_state_ns1_3 or axi_wr_state_ns2_3 or axi_wr_state_ns3_3 or axi_wr_state_ns4_3;
   axi_wr_state_d(4) <= axi_wr_state_ns0_4 or axi_wr_state_ns1_4 or axi_wr_state_ns2_4 or axi_wr_state_ns3_4 or axi_wr_state_ns4_4;
 
+
   -----------------------------------------------------------------------------
   -- Config Registers
   -----------------------------------------------------------------------------
-  s0_axi_rdata(31 downto 0) <= gate(exp_rd_data(31 downto 0),      exp_rd_data_valid                                                                                             ) or
-                               gate(reg_00_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) or
-                               gate(reg_01_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) or
-                               gate(reg_02_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0008#, 32))) or
-                               gate(reg_03_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#000C#, 32))) or
-                               gate(reg_04_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0010#, 32))) or
-                               gate(reg_05_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0014#, 32))) or
-                               gate(reg_06_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0018#, 32))) or
-                               gate(reg_07_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#001C#, 32))) or
-                               gate(reg_08_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0020#, 32))) or
-                               gate(reg_09_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0024#, 32))) or
-                               gate(reg_0A_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0028#, 32))) or
-                               gate(reg_0B_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#002C#, 32))) or
-                               gate(reg_0C_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0030#, 32))) or
-                               gate(reg_0D_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0034#, 32))) or
-                               gate(reg_0E_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0038#, 32))) or
-                               gate(reg_0F_q(31 downto 0),     not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#003C#, 32)));
+  
+  --Add case when register address is not a multiple of 4 - expansion data have a highest priority versus offset
+  reg_rd_addr_notmod4_d  <= '0' when reg_rd_addr_q(1 downto 0) = "00" else '1';
+     
+  s0_axi_rdata(31 downto 0) <= gate(exp_rd_data(31 downto 0),       exp_rd_data_valid                                                                                             ) or
+                               gate(rd_data_error(31 downto 0), not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_notmod4_q                                                ) or
+                               gate(reg_00_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) or
+                               gate(reg_01_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) or
+                               gate(reg_02_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0008#, 32))) or
+                               gate(reg_03_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#000C#, 32))) or
+                               gate(reg_04_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0010#, 32))) or
+                               gate(reg_05_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0014#, 32))) or
+                               gate(reg_06_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0018#, 32))) or
+                               gate(reg_07_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#001C#, 32))) or
+                               gate(reg_08_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0020#, 32))) or
+                               gate(reg_09_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0024#, 32))) or
+                               gate(reg_0A_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0028#, 32))) or
+                               gate(reg_0B_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#002C#, 32))) or
+                               gate(reg_0C_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0030#, 32))) or
+                               gate(reg_0D_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0034#, 32))) or
+                               gate(reg_0E_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0038#, 32))) or
+                               gate(reg_0F_q(31 downto 0),      not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#003C#, 32))) or 
+                               gate(rd_data_oob(31 downto 0),   not exp_rd_data_valid and reg_rd_valid_q and reg_rd_addr_q > std_ulogic_vector(to_unsigned(offset + 16#003C#, 32)));
 
   reg_00_d <= gate(reg_00_q,                                                                                                  not (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) and not reg_00_hwwe_i) or
               gate((s0_axi_wdata_q  and REG_00_WE_MASK)   or (reg_00_q and not REG_00_WE_MASK),                                   (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) and not reg_00_hwwe_i) or
-              gate((reg_00_update_i and REG_00_HWWE_MASK) or (reg_00_q and     (REG_00_STICKY_MASK or not REG_00_HWWE_MASK)),                                                                                                      reg_00_hwwe_i);
+              gate((reg_00_update_i and REG_00_HWWE_MASK) or (reg_00_q and     (REG_00_STICKY_MASK or not REG_00_HWWE_MASK)),                                                                                                      reg_00_hwwe_i);            
   reg_01_d <= gate(reg_01_q,                                                                                                  not (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) and not reg_01_hwwe_i) or
               gate((s0_axi_wdata_q  and REG_01_WE_MASK)   or (reg_01_q and not REG_01_WE_MASK),                                   (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) and not reg_01_hwwe_i) or
               gate((reg_01_update_i and REG_01_HWWE_MASK) or (reg_01_q and     (REG_01_STICKY_MASK or not REG_01_HWWE_MASK)),                                                                                                      reg_01_hwwe_i);
@@ -576,6 +593,7 @@ begin
       if (s0_axi_aresetn = '0') then
         axi_rd_state_q <= "0001";
         reg_rd_addr_q  <= x"00000000";
+        reg_rd_addr_notmod4_q <= '0';
         axi_wr_state_q <= "00001";
         reg_wr_addr_q  <= x"00000000";
         reg_00_q       <= REG_00_RESET;
@@ -599,6 +617,7 @@ begin
       else
         axi_rd_state_q <= axi_rd_state_d;
         reg_rd_addr_q  <= reg_rd_addr_d;
+        reg_rd_addr_notmod4_q <= reg_rd_addr_notmod4_d;
         axi_wr_state_q <= axi_wr_state_d;
         reg_wr_addr_q  <= reg_wr_addr_d;
         reg_00_q       <= reg_00_d;

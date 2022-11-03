@@ -92,8 +92,16 @@ begin
   host_cfg_regs : entity work.axi_regs_32
     generic map (
       REG_00_RESET       => x"00000001",
+      REG_01_RESET       => x"00000000",
+      REG_02_RESET       => x"00000000",
       REG_03_RESET       => x"FFFFFFF8",
       REG_04_RESET       => x"04060045",
+      REG_05_RESET       => x"00000000",
+      REG_06_RESET       => x"00000000",
+      REG_07_RESET       => x"00000000",
+      REG_08_RESET       => x"00000000",
+      REG_09_RESET       => x"00000000",
+      REG_0A_RESET       => x"00000000",
       REG_00_WE_MASK     => x"FFFFFFFF",
       REG_01_HWWE_MASK   => x"FFFFFFF7", -- this is the interrupt logging register
       REG_02_HWWE_MASK   => x"FF90000F", -- this is the mem_cntl register

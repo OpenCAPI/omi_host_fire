@@ -9,6 +9,7 @@ puts "XILINX_PART is $XILINX_PART"
 variable OMI_FREQ $::env(OMI_FREQ)
 variable DESIGN $::env(DESIGN)
 variable BOARD $::env(BOARD)
+variable OMI_PORTS $::env(OMI_PORTS)
 
 # Top Level Block
 #  Name of vhdl file with top level of design
@@ -93,6 +94,7 @@ proc yesNoPrompt {} {
 
 variable DESIGN
 variable BOARD
+variable OMI_PORTS
 
 ################################################################################
 # Create Project

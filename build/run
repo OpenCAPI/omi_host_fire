@@ -25,10 +25,12 @@ if [[ "$1" == "fire" ]] ; then
     # Apollo Board: xcvu7p
     # export BOARD="apollo"
     # export XILINX_PART="xcvu7p-flvc2104-2-e"
+    # export OMI_PORTS="4"
 
     # VCU128 Board: xcvu37p
     export BOARD="vcu128"
     export XILINX_PART="xcvu37p-fsvh2892-2-e"
+    export OMI_PORTS="2"
 
 # Choose the frequency
     # OMI_FREQ is set to 333 for internal logic at 333MHz and OMI links at 21.33GHz

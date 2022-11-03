@@ -6,6 +6,7 @@ proc create_FIRE_IPs {} {
     variable OMI_FREQ
     variable DESIGN
     variable BOARD
+    variable OMI_PORTS
     set cwd [file dirname [file normalize [info script]]]
     set ip_dir   $cwd/../ip_created_for_$DESIGN
     if {[catch {file mkdir $ip_dir} err opts] != 0} {
@@ -79,18 +80,18 @@ proc create_FIRE_IPs {} {
 #=======================================================================================================
   if { $BOARD == "vcu128" } {
     if { $OMI_FREQ == "333" } {
-       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for VCU128 (w/ workaround)"
+       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for $BOARD (w/ workaround)"
     } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for VCU128 (w/ workaround)"
+       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for $BOARD (w/ workaround)"
     } else {
        puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_0"
        exit
     }
  } elseif { $BOARD == "apollo" } {
     if { $OMI_FREQ == "333" } {
-       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for APOLLO"
+       puts "                        generating IP gtwizard_ultrascale_0  for 333MHz for $BOARD"
     } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for APOLLO"
+       puts "                        generating IP gtwizard_ultrascale_0  for 400MHz for $BOARD"
     } else {
        puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_0"
        exit
@@ -161,18 +162,18 @@ proc create_FIRE_IPs {} {
 
   if { $BOARD == "vcu128" } {
     if { $OMI_FREQ == "333" } {
-       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for VCU128 (w/ workaround)"
+       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for $BOARD (w/ workaround)"
     } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for VCU128 (w/ workaround)"
+       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for $BOARD (w/ workaround)"
     } else {
        puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_1"
        exit
     }
 } elseif { $BOARD == "apollo" } {
     if { $OMI_FREQ == "333" } {
-       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for APOLLO"
+       puts "                        generating IP gtwizard_ultrascale_1  for 333MHz for $BOARD"
     } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for APOLLO"
+       puts "                        generating IP gtwizard_ultrascale_1  for 400MHz for $BOARD"
     } else {
        puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_1"
        exit
@@ -238,12 +239,12 @@ proc create_FIRE_IPs {} {
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -no_script >> $log_file  
   export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
-# for Apollo board add 2 additional ports
-  if { $BOARD == "apollo" } {
+  # for Apollo board add 2 additional ports - No implementation for other than apollo card yet
+  if { $OMI_PORTS == "4" } {
   if { $OMI_FREQ == "333" } {
-     puts "                        generating IP gtwizard_ultrascale_2  for 333MHz for APOLLO"
+     puts "                        generating IP gtwizard_ultrascale_2  for 333MHz for apollo"
   } elseif { $OMI_FREQ == "400" } {
-     puts "                        generating IP gtwizard_ultrascale_2  for 400MHz for APOLLO"
+     puts "                        generating IP gtwizard_ultrascale_2  for 400MHz for apollo"
   } else {
      puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_2"
      exit
@@ -300,9 +301,9 @@ proc create_FIRE_IPs {} {
 
 
   if { $OMI_FREQ == "333" } {
-     puts "                        generating IP gtwizard_ultrascale_3  for 333MHz for APOLLO"
+     puts "                        generating IP gtwizard_ultrascale_3  for 333MHz for apollo"
   } elseif { $OMI_FREQ == "400" } {
-     puts "                        generating IP gtwizard_ultrascale_3  for 400MHz for APOLLO"
+     puts "                        generating IP gtwizard_ultrascale_3  for 400MHz for apollo"
   } else {
      puts "ERROR:                  unrecognized frequency for IP gtwizard_ultrascale_3"
      exit
@@ -377,24 +378,13 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
 
 
 
-  if { $BOARD == "vcu128" } {
-    if { $OMI_FREQ == "333" } {
-       puts "                        generating IP clk_wiz_sysclk         for 333MHz for VCU128"
-    } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP clk_wiz_sysclk         for 400MHz for VCU128"
-    } else {
-       puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
-       exit
-    }
-  } elseif { $BOARD == "apollo" } {
-    if { $OMI_FREQ == "333" } {
-       puts "                        generating IP clk_wiz_sysclk         for 333MHz for APOLLO"
-    } elseif { $OMI_FREQ == "400" } {
-       puts "                        generating IP clk_wiz_sysclk         for 400MHz for APOLLO"
-    } else {
-       puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
-       exit
-    }
+  if { $OMI_FREQ == "333" } {
+     puts "                        generating IP clk_wiz_sysclk         for 333MHz for $BOARD"
+  } elseif { $OMI_FREQ == "400" } {
+     puts "                        generating IP clk_wiz_sysclk         for 400MHz for $BOARD"
+  } else {
+     puts "ERROR:                  unrecognized frequency for IP clk_wiz_sysclk"
+     exit
   }
 
   create_ip -name clk_wiz -vendor xilinx.com -library ip -version 6.0 -module_name clk_wiz_sysclk  -dir $ip_dir >> $log_file
@@ -544,7 +534,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   export_simulation    -of_objects             [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
-  puts "                        generating IP axi4lite_crossbar_0"
+  puts "                        generating IP axi4lite_crossbar_0    for $OMI_PORTS ports"
   create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi4lite_crossbar_0 -dir $ip_dir >> $log_file
   set_property -dict [list                                                       \
                     CONFIG.NUM_MI {9}                                            \
@@ -569,8 +559,8 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                     CONFIG.M08_READ_ISSUING {1}     CONFIG.M09_READ_ISSUING {1}     CONFIG.M10_READ_ISSUING {1}     CONFIG.M11_READ_ISSUING {1}     \
                     CONFIG.M12_READ_ISSUING {1}     CONFIG.M13_READ_ISSUING {1}     CONFIG.M14_READ_ISSUING {1}     CONFIG.M15_READ_ISSUING {1}     \
                     CONFIG.S00_SINGLE_THREAD {1}                                 \
-                    CONFIG.M00_A00_BASE_ADDR {0x101040000000000}                 \
-                    CONFIG.M01_A00_BASE_ADDR {0x102040000000000}                 \
+                    CONFIG.M00_A00_BASE_ADDR {0x0101040000000000}                \
+                    CONFIG.M01_A00_BASE_ADDR {0x0102040000000000}                \
                     CONFIG.M02_A00_BASE_ADDR {0x0104040000000000}                \
                     CONFIG.M03_A00_BASE_ADDR {0x01010C0000000000}                \
                     CONFIG.M04_A00_BASE_ADDR {0x01020C0000000000}                \
@@ -578,11 +568,21 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                     CONFIG.M06_A00_BASE_ADDR {0x0100000000000000}                \
                     CONFIG.M07_A00_BASE_ADDR {0x0103000000000000}                \
                     CONFIG.M08_A00_BASE_ADDR {0x0105000000000000}                \
+                   ] [get_ips axi4lite_crossbar_0]
+  #Enable 2 or 4 ports
+  if { $OMI_PORTS == "2" } {
+  set_property -dict [list                                                                                          \
+                    CONFIG.M00_A00_ADDR_WIDTH {24}  CONFIG.M01_A00_ADDR_WIDTH {24}  CONFIG.M02_A00_ADDR_WIDTH {24}  \
+                    CONFIG.M03_A00_ADDR_WIDTH {00}  CONFIG.M04_A00_ADDR_WIDTH {00}  CONFIG.M05_A00_ADDR_WIDTH {00}  \
+                    CONFIG.M06_A00_ADDR_WIDTH {06}  CONFIG.M07_A00_ADDR_WIDTH {24}  CONFIG.M08_A00_ADDR_WIDTH {24}  \
+                   ] [get_ips axi4lite_crossbar_0]
+  } elseif { $OMI_PORTS == "4" } {
+  set_property -dict [list                                                                                          \
                     CONFIG.M00_A00_ADDR_WIDTH {24}  CONFIG.M01_A00_ADDR_WIDTH {24}  CONFIG.M02_A00_ADDR_WIDTH {24}  \
                     CONFIG.M03_A00_ADDR_WIDTH {24}  CONFIG.M04_A00_ADDR_WIDTH {24}  CONFIG.M05_A00_ADDR_WIDTH {24}  \
-                    CONFIG.M06_A00_ADDR_WIDTH {24}  CONFIG.M07_A00_ADDR_WIDTH {24}  CONFIG.M08_A00_ADDR_WIDTH {24}  \
+                    CONFIG.M06_A00_ADDR_WIDTH {06}  CONFIG.M07_A00_ADDR_WIDTH {24}  CONFIG.M08_A00_ADDR_WIDTH {24}  \
                    ] [get_ips axi4lite_crossbar_0]
-
+  }
   set_property generate_synth_checkpoint false [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] 
   generate_target {instantiation_template}     [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] >> $log_file  
@@ -590,9 +590,9 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
-  puts "                        generating IP axi4lite_crossbar_1"
+  puts "                        generating IP axi4lite_crossbar_1    for $OMI_PORTS ports"
   create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi4lite_crossbar_1 -dir $ip_dir >> $log_file
-  set_property -dict [list                                                         \
+  set_property -dict [list                                                       \
                    CONFIG.NUM_MI {6}                                             \
                    CONFIG.ADDR_WIDTH {64}                                        \
                    CONFIG.PROTOCOL {AXI4LITE}                                    \
@@ -621,9 +621,20 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                    CONFIG.M03_A00_BASE_ADDR {0x0101080000000000}                 \
                    CONFIG.M04_A00_BASE_ADDR {0x0102080000000000}                 \
                    CONFIG.M05_A00_BASE_ADDR {0x0104080000000000}                 \
+                   ] [get_ips axi4lite_crossbar_1]
+
+  #Enable 2 or 4 ports
+  if { $OMI_PORTS == "2" } {
+  set_property -dict [list                                                                                          \
+                   CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M01_A00_ADDR_WIDTH {24} CONFIG.M02_A00_ADDR_WIDTH {24}     \
+                   CONFIG.M03_A00_ADDR_WIDTH {00} CONFIG.M04_A00_ADDR_WIDTH {00} CONFIG.M05_A00_ADDR_WIDTH {00}     \
+                   ] [get_ips axi4lite_crossbar_1]
+  } elseif { $OMI_PORTS == "4" } {
+  set_property -dict [list                                                                                          \
                    CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M01_A00_ADDR_WIDTH {24} CONFIG.M02_A00_ADDR_WIDTH {24}     \
                    CONFIG.M03_A00_ADDR_WIDTH {24} CONFIG.M04_A00_ADDR_WIDTH {24} CONFIG.M05_A00_ADDR_WIDTH {24}     \
                    ] [get_ips axi4lite_crossbar_1]
+  }
 
   set_property generate_synth_checkpoint false [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] 
   generate_target {instantiation_template}     [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] >> $log_file  
@@ -632,7 +643,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
-  puts "                        generating IP axi3_crossbar_0"
+  puts "                        generating IP axi3_crossbar_0        for $OMI_PORTS ports"
   create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi3_crossbar_0 -dir $ip_dir >> $log_file
   set_property -dict [list                                                                                           \
                      CONFIG.ADDR_RANGES {12}                                                                         \
@@ -650,8 +661,8 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                      CONFIG.S07_BASE_ID {0x000000e0} CONFIG.S08_BASE_ID {0x00000100} CONFIG.S09_BASE_ID {0x00000120} \
                      CONFIG.S10_BASE_ID {0x00000140} CONFIG.S11_BASE_ID {0x00000160} CONFIG.S12_BASE_ID {0x00000180} \
                      CONFIG.S13_BASE_ID {0x000001a0} CONFIG.S14_BASE_ID {0x000001c0} CONFIG.S15_BASE_ID {0x000001e0} \
-                     CONFIG.M00_A00_BASE_ADDR {0x00101040000000000}                                                  \
-                     CONFIG.M00_A01_BASE_ADDR {0x00102040000000000}                                                  \
+                     CONFIG.M00_A00_BASE_ADDR {0x0101040000000000}                                                   \
+                     CONFIG.M00_A01_BASE_ADDR {0x0102040000000000}                                                   \
                      CONFIG.M00_A02_BASE_ADDR {0x0104040000000000}                                                   \
                      CONFIG.M00_A03_BASE_ADDR {0x01010C0000000000}                                                   \
                      CONFIG.M00_A04_BASE_ADDR {0x01020C0000000000}                                                   \
@@ -668,7 +679,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                      CONFIG.M07_A00_BASE_ADDR {0x0101000000000000}                                                   \
                      CONFIG.M07_A01_BASE_ADDR {0x0102000000000000}                                                   \
                      CONFIG.M07_A02_BASE_ADDR {0x0104000000000000}                                                   \
-                     CONFIG.M07_A03_BASE_ADDR {0x0108000000000000}                                                   \
+                     CONFIG.M07_A03_BASE_ADDR {0x0101080000000000}                                                   \
                      CONFIG.M07_A04_BASE_ADDR {0x0102080000000000}                                                   \
                      CONFIG.M07_A05_BASE_ADDR {0x0104080000000000}                                                   \
                      CONFIG.M07_A06_BASE_ADDR {0x0}                                                                  \
@@ -676,17 +687,35 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                      CONFIG.M07_A08_BASE_ADDR {0x0001000100000000}                                                   \
                      CONFIG.M07_A09_BASE_ADDR {0x0000080000000000}                                                   \
                      CONFIG.M07_A10_BASE_ADDR {0x0001080000000000}                                                   \
-                     CONFIG.M07_A11_BASE_ADDR {0x0001080100000000}                                                   \
-                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24} CONFIG.M00_A03_ADDR_WIDTH {24} \
-                     CONFIG.M00_A04_ADDR_WIDTH {24} CONFIG.M00_A05_ADDR_WIDTH {24} CONFIG.M00_A06_ADDR_WIDTH {24} CONFIG.M00_A07_ADDR_WIDTH {24} \
-                     CONFIG.M00_A08_ADDR_WIDTH {24} CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} CONFIG.M03_A00_ADDR_WIDTH {31} \
-                     CONFIG.M04_A00_ADDR_WIDTH {42} CONFIG.M05_A00_ADDR_WIDTH {31} CONFIG.M06_A00_ADDR_WIDTH {31} CONFIG.M07_A00_ADDR_WIDTH {24} \
-                     CONFIG.M07_A01_ADDR_WIDTH {24} CONFIG.M07_A02_ADDR_WIDTH {24} CONFIG.M07_A03_ADDR_WIDTH {24} CONFIG.M07_A04_ADDR_WIDTH {24} \
-                     CONFIG.M07_A05_ADDR_WIDTH {24} CONFIG.M07_A06_ADDR_WIDTH {42} CONFIG.M07_A07_ADDR_WIDTH {31} CONFIG.M07_A08_ADDR_WIDTH {31} \
-                     CONFIG.M07_A09_ADDR_WIDTH {42} CONFIG.M07_A10_ADDR_WIDTH {31} CONFIG.M07_A11_ADDR_WIDTH {31}   \
+                     CONFIG.M07_A11_BASE_ADDR {0x0001080100000000} 
                      ] [get_ips axi3_crossbar_0]
 
-
+  #Enable 2 or 4 ports
+  if { $OMI_PORTS == "2" } {                                                                                         \
+  set_property -dict [list                                                                                           \
+                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M00_A03_ADDR_WIDTH {00} CONFIG.M00_A04_ADDR_WIDTH {00} CONFIG.M00_A05_ADDR_WIDTH {00}    \
+                     CONFIG.M00_A06_ADDR_WIDTH {24} CONFIG.M00_A07_ADDR_WIDTH {24} CONFIG.M00_A08_ADDR_WIDTH {24}    \
+                     CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} CONFIG.M03_A00_ADDR_WIDTH {31}    \
+                     CONFIG.M04_A00_ADDR_WIDTH {00} CONFIG.M05_A00_ADDR_WIDTH {00} CONFIG.M06_A00_ADDR_WIDTH {00}    \
+                     CONFIG.M07_A00_ADDR_WIDTH {24} CONFIG.M07_A01_ADDR_WIDTH {24} CONFIG.M07_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M07_A03_ADDR_WIDTH {00} CONFIG.M07_A04_ADDR_WIDTH {00} CONFIG.M07_A05_ADDR_WIDTH {00}    \
+                     CONFIG.M07_A06_ADDR_WIDTH {42} CONFIG.M07_A07_ADDR_WIDTH {31} CONFIG.M07_A08_ADDR_WIDTH {31}    \
+                     CONFIG.M07_A09_ADDR_WIDTH {00} CONFIG.M07_A10_ADDR_WIDTH {00} CONFIG.M07_A11_ADDR_WIDTH {00}    \
+                     ] [get_ips axi3_crossbar_0]
+  } elseif { $OMI_PORTS == "4" } {
+  set_property -dict [list                                                                                           \
+                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M00_A03_ADDR_WIDTH {24} CONFIG.M00_A04_ADDR_WIDTH {24} CONFIG.M00_A05_ADDR_WIDTH {24}    \
+                     CONFIG.M00_A06_ADDR_WIDTH {24} CONFIG.M00_A07_ADDR_WIDTH {24} CONFIG.M00_A08_ADDR_WIDTH {24}    \
+                     CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} CONFIG.M03_A00_ADDR_WIDTH {31}    \
+                     CONFIG.M04_A00_ADDR_WIDTH {42} CONFIG.M05_A00_ADDR_WIDTH {31} CONFIG.M06_A00_ADDR_WIDTH {31}    \
+                     CONFIG.M07_A00_ADDR_WIDTH {24} CONFIG.M07_A01_ADDR_WIDTH {24} CONFIG.M07_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M07_A03_ADDR_WIDTH {24} CONFIG.M07_A04_ADDR_WIDTH {24} CONFIG.M07_A05_ADDR_WIDTH {24}    \
+                     CONFIG.M07_A06_ADDR_WIDTH {42} CONFIG.M07_A07_ADDR_WIDTH {31} CONFIG.M07_A08_ADDR_WIDTH {31}    \
+                     CONFIG.M07_A09_ADDR_WIDTH {42} CONFIG.M07_A10_ADDR_WIDTH {31} CONFIG.M07_A11_ADDR_WIDTH {31}    \
+                     ] [get_ips axi3_crossbar_0]
+  }
 
   set_property generate_synth_checkpoint false [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] 
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] >> $log_file  
@@ -695,7 +724,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   export_simulation    -of_objects             [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
-  puts "                        generating IP axi3_crossbar_1"
+  puts "                        generating IP axi3_crossbar_1        for $OMI_PORTS ports"
   create_ip -name axi_crossbar -vendor xilinx.com -library ip -version 2.1 -module_name axi3_crossbar_1 -dir $ip_dir >> $log_file
   set_property -dict [list                                                                                           \
                      CONFIG.ADDR_RANGES {6}                                                                          \
@@ -715,8 +744,8 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                      CONFIG.M00_A00_BASE_ADDR {0x0101000000000000}                                                   \
                      CONFIG.M00_A01_BASE_ADDR {0x0102000000000000}                                                   \
                      CONFIG.M00_A02_BASE_ADDR {0x0104000000000000}                                                   \
-                     CONFIG.M00_A03_BASE_ADDR {0x101080000000000}                                                    \
-                     CONFIG.M00_A04_BASE_ADDR {0x102080000000000}                                                    \
+                     CONFIG.M00_A03_BASE_ADDR {0x0101080000000000}                                                    \
+                     CONFIG.M00_A04_BASE_ADDR {0x0102080000000000}                                                    \
                      CONFIG.M00_A05_BASE_ADDR {0x0104080000000000}                                                   \
                      CONFIG.M01_A00_BASE_ADDR {0x0000000000000000}                                                   \
                      CONFIG.M02_A00_BASE_ADDR {0x0001000000000000}                                                   \
@@ -724,11 +753,24 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
                      CONFIG.M04_A00_BASE_ADDR {0x0000080000000000}                                                   \
                      CONFIG.M05_A00_BASE_ADDR {0x0001080000000000}                                                   \
                      CONFIG.M06_A00_BASE_ADDR {0x0001080100000000}                                                   \
-                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24} CONFIG.M00_A03_ADDR_WIDTH {24} \
-                     CONFIG.M00_A04_ADDR_WIDTH {24} CONFIG.M00_A05_ADDR_WIDTH {24} CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} \
-                     CONFIG.M03_A00_ADDR_WIDTH {31} CONFIG.M04_A00_ADDR_WIDTH {42} CONFIG.M05_A00_ADDR_WIDTH {31} CONFIG.M06_A00_ADDR_WIDTH {31} \
                      ] [get_ips axi3_crossbar_1]
 
+  #Enable 2 or 4 ports
+  if { $OMI_PORTS == "2" } {                                                                                         \
+  set_property -dict [list                                                                                           \
+                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M00_A03_ADDR_WIDTH {00} CONFIG.M00_A04_ADDR_WIDTH {00} CONFIG.M00_A05_ADDR_WIDTH {00}    \
+                     CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} CONFIG.M03_A00_ADDR_WIDTH {31}    \
+                     CONFIG.M04_A00_ADDR_WIDTH {00} CONFIG.M05_A00_ADDR_WIDTH {00} CONFIG.M06_A00_ADDR_WIDTH {00}    \
+                     ] [get_ips axi3_crossbar_1]
+  } elseif { $OMI_PORTS == "4" } {
+  set_property -dict [list                                                                                           \
+                     CONFIG.M00_A00_ADDR_WIDTH {24} CONFIG.M00_A01_ADDR_WIDTH {24} CONFIG.M00_A02_ADDR_WIDTH {24}    \
+                     CONFIG.M00_A03_ADDR_WIDTH {24} CONFIG.M00_A04_ADDR_WIDTH {24} CONFIG.M00_A05_ADDR_WIDTH {24}    \
+                     CONFIG.M01_A00_ADDR_WIDTH {42} CONFIG.M02_A00_ADDR_WIDTH {31} CONFIG.M03_A00_ADDR_WIDTH {31}    \
+                     CONFIG.M04_A00_ADDR_WIDTH {42} CONFIG.M05_A00_ADDR_WIDTH {31} CONFIG.M06_A00_ADDR_WIDTH {31}    \
+                     ] [get_ips axi3_crossbar_1]
+  }
 
   set_property generate_synth_checkpoint false [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] 
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] >> $log_file  

@@ -30,73 +30,73 @@ entity axi_regs_32_large is
   generic (
     -- Offset of register block
     offset : natural := 0;
-
-    -- Reset and Initialization Values
-    REG_00_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_01_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_02_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_03_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_04_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_05_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_06_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_07_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_08_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_09_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0A_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0B_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0C_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0D_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0E_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_0F_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_10_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_11_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_12_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_13_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_14_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_15_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_16_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_17_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_18_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_19_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1A_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1B_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1C_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1D_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1E_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_1F_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_20_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_21_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_22_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_23_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_24_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_25_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_26_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_27_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_28_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_29_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2A_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2B_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2C_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2D_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2E_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_2F_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
+    
+    -- Reset and Initialization Values - init at dec0de00 to report unconnected reg
+    REG_00_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_01_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_02_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_03_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_04_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_05_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_06_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_07_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_08_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_09_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0A_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0B_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0C_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0D_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0E_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_0F_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_10_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_11_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_12_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_13_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_14_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_15_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_16_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_17_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_18_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_19_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1A_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1B_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1C_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1D_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1E_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_1F_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_20_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_21_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_22_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_23_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_24_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_25_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_26_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_27_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_28_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_29_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2A_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2B_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2C_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2D_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2E_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_2F_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
     --REG_30_RESET : std_ulogic_vector(31 downto 0) := x"00000000"; -- Used by exp interface
     --REG_31_RESET : std_ulogic_vector(31 downto 0) := x"00000000"; -- Used by exp interface
     --REG_32_RESET : std_ulogic_vector(31 downto 0) := x"00000000"; -- Used by exp interface
-    REG_33_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_34_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_35_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_36_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_37_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_38_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_39_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3A_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3B_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3C_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3D_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3E_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_3F_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
-    REG_40_RESET : std_ulogic_vector(31 downto 0) := x"00000000";
+    REG_33_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_34_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_35_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_36_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_37_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_38_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_39_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3A_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3B_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3C_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3D_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3E_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_3F_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
+    REG_40_RESET : std_ulogic_vector(31 downto 0) := x"dec0de00";
 
     -- Scom Write Enable Masks
     REG_00_WE_MASK : std_ulogic_vector(31 downto 0) := x"FFFFFFFF";
@@ -563,6 +563,9 @@ architecture axi_regs_32_large of axi_regs_32_large is
   signal reg_rd_valid   : std_ulogic;
   signal reg_rd_addr_d  : std_ulogic_vector(31 downto 0);
   signal reg_rd_addr_q  : std_ulogic_vector(31 downto 0);
+    
+  signal reg_rd_addr_notmod4_d : std_ulogic;
+  signal reg_rd_addr_notmod4_q : std_ulogic;
 
   signal axi_wr_state_d     : std_ulogic_vector(4 downto 0);
   signal axi_wr_state_q     : std_ulogic_vector(4 downto 0);
@@ -728,6 +731,10 @@ architecture axi_regs_32_large of axi_regs_32_large is
   signal reg_3F_q : std_ulogic_vector(31 downto 0) := REG_3F_RESET;
   signal reg_40_d : std_ulogic_vector(31 downto 0);
   signal reg_40_q : std_ulogic_vector(31 downto 0) := REG_40_RESET;
+
+  -- to mimic axi bridges behavior when unknown address is accessed
+  signal rd_data_error : std_ulogic_vector(31 downto 0) := x"dec0deff";
+  signal rd_data_oob    : std_ulogic_vector(31 downto 0) := x"dec0de0b";
 
   attribute keep                         : string;
   attribute mark_debug                   : string;
@@ -899,7 +906,12 @@ begin
   -----------------------------------------------------------------------------
   -- Config Registers
   -----------------------------------------------------------------------------
+  
+   --Add case when register address is not a multiple of 4
+ reg_rd_addr_notmod4_d <= '0' when reg_rd_addr_q(1 downto 0) = "00" else '1';
+
   s0_axi_rdata(31 downto 0) <= gate(exp_rd_data(31 downto 0),      exp_rd_data_valid                                                                          ) or
+                               gate(rd_data_error(31 downto 0),not exp_rd_data_valid and reg_rd_addr_notmod4_q                                                ) or
                                gate(reg_00_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) or
                                gate(reg_01_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0004#, 32))) or
                                gate(reg_02_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0008#, 32))) or
@@ -964,7 +976,8 @@ begin
                                gate(reg_3D_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#00F4#, 32))) or
                                gate(reg_3E_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#00F8#, 32))) or
                                gate(reg_3F_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#00FC#, 32))) or
-                               gate(reg_40_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0100#, 32)));
+                               gate(reg_40_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0100#, 32))) or
+                               gate(reg_40_q(31 downto 0),     not exp_rd_data_valid and reg_rd_addr_q > std_ulogic_vector(to_unsigned(offset + 16#0100#, 32)));
 
   reg_00_d <= gate(reg_00_q,                                                                                                  not (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) and not reg_00_hwwe_i) or
               gate((s0_axi_wdata_q  and REG_00_WE_MASK)   or (reg_00_q and not REG_00_WE_MASK),                                   (reg_wr_valid and reg_wr_addr_q = std_ulogic_vector(to_unsigned(offset + 16#0000#, 32))) and not reg_00_hwwe_i) or
@@ -1238,6 +1251,7 @@ begin
       if (s0_axi_aresetn = '0') then
         axi_rd_state_q <= "0001";
         reg_rd_addr_q  <= x"00000000";
+        reg_rd_addr_notmod4_q <= '0';
         axi_wr_state_q <= "00001";
         reg_wr_addr_q  <= x"00000000";
         reg_00_q       <= REG_00_RESET;
@@ -1309,6 +1323,7 @@ begin
       else
         axi_rd_state_q <= axi_rd_state_d;
         reg_rd_addr_q  <= reg_rd_addr_d;
+        reg_rd_addr_notmod4_q <= reg_rd_addr_notmod4_d;
         axi_wr_state_q <= axi_wr_state_d;
         reg_wr_addr_q  <= reg_wr_addr_d;
         reg_00_q       <= reg_00_d;

@@ -79,7 +79,7 @@ module ocx_dlx_rx_lane (
  ,EDPL_error_out      // > output
  ,EDPL_ready_out      // > output
  ,rx_tx_EDPL_thres_reached // > output
- ,lane_force_unlock
+ ,lane_force_unlock      // input
  
  
 
@@ -88,7 +88,6 @@ module ocx_dlx_rx_lane (
 
 );
 
-//!! Bugspray Include : ocx_dlx_rx_lane ;
 
 //-- phy interface through rx
 input           valid_in;       //-- data from phy is valid
@@ -382,16 +381,16 @@ wire         valid_in_d2_din;
 reg          valid_in_d1_q;
 reg          valid_in_d2_q;
 
-wire [0:63] descrambled_data_raw_d1_din;
+wire [0:63]  descrambled_data_raw_d1_din;
 wire [0:63]  descrambled_data_raw_d2_din;
-reg  [0:63] descrambled_data_raw_d1_q;
+reg  [0:63]  descrambled_data_raw_d1_q;
 reg  [0:63]  descrambled_data_raw_d2_q;
 
-wire     lane_force_unlock_edge;
-   wire  lane_force_unlock_d;
-   reg   lane_force_unlock_q;
-   wire  lane_force_unlock_n1_d;
-   reg   lane_force_unlock_n1_q;
+wire         lane_force_unlock_edge;
+wire         lane_force_unlock_d;
+reg          lane_force_unlock_q;
+wire         lane_force_unlock_n1_d;
+reg          lane_force_unlock_n1_q;
 
 //---------------------------------------- end declarations ------------------------------------------------
 //---------------------------------------- functions ------------------------------------------------

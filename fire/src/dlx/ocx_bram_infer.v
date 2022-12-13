@@ -28,35 +28,35 @@ module ocx_bram_infer(
     input ena,
     input enb,
     input wea,
-    input rstb,        //TLL Added
-    //input regceb,    //TLL Added
-    input [6:0] addra, //TLL Changed 8 to 6
-    input [6:0]  addrb,//TLL Changed 8 to 6
+    input rstb,        
+    //input regceb,    
+    input [6:0] addra, 
+    input [6:0]  addrb,
     input [512-1:0] dina,
     output [512-1:0] doutb,
     output sbiterr,        
     output dbiterr,        
-    output wire [6:0] rdaddrecc     //TLL Changed 8 to 6
+    output wire [6:0] rdaddrecc     
     );
     
   (* ram_style="block" *)   
     // wizard generated memory has 2 clocks, use clka for both ports
     wire  clk;
     assign clk = clka; 
-    //wire rstb;        //TLL Commented out since I'm using dlx_reset info
+    //wire rstb;        
     wire regceb;         
-    //assign rstb = 1'b0; //TLL Commented out since I'm using dlx_reset info
+    //assign rstb = 1'b0; 
     assign regceb  = 1'b1;
     assign sbiterr = 1'b0;
     assign dbiterr = 1'b0;
-    assign rdaddrecc = {7{1'b0}};  //TLL Changed 9 to 7
+    assign rdaddrecc = {7{1'b0}};  
    
       //  Xilinx Simple Dual Port Single Clock RAM
       //  This code implements a parameterizable SDP single clock memory.
       //  If a reset or enable is not necessary, it may be tied off or removed from the code.
     
       parameter RAM_WIDTH = 512;                  // Specify RAM data width
-      parameter RAM_DEPTH = 128;      //TLL Changed 512 to 128 - 512 too big for Diver            // Specify RAM depth (number of entries)
+      parameter RAM_DEPTH = 128;      
       parameter RAM_PERFORMANCE = "HIGH_PERFORMANCE"; // Select "HIGH_PERFORMANCE" or "LOW_LATENCY" 
       parameter INIT_FILE = "";                       // Specify name/location of RAM initialization file if using one (leave blank if not)
   
@@ -84,9 +84,8 @@ module ocx_bram_infer(
       end
     
       //  The following code generates HIGH_PERFORMANCE (use output register) or LOW_LATENCY (no output register)
-      //  TODO TLL - compiler warnings with these - constant is zero extended from width 88 to width 128
       generate
-        if (RAM_PERFORMANCE == "LOW______LATENCY") begin: no_output_register // TLL added "_____" to name to bypass compiler warning
+        if (RAM_PERFORMANCE == "LOW______LATENCY") begin: no_output_register 
     
           // The following is a 1 clock cycle read latency at the cost of a longer clock-to-out timing
            assign doutb = ram_sdp_data;

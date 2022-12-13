@@ -113,7 +113,7 @@ parameter  GEMINI_NOT_APOLLO = 0
  ,degrade_to_inside              // < input
 
  ,opt_gckn                       // < input
- ,lane_force_unlock
+ ,lane_force_unlock              // < input [7:0]
 //--  ,gnd                            // <> inout
 //--  ,vdn                            // <> inout
 );

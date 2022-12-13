@@ -117,10 +117,10 @@ parameter GEMINI_NOT_APOLLO = 0
     input  [7:0]  rx_tx_pattern_a;
     input  [7:0]  rx_tx_pattern_b;
     input  [7:0]  rx_tx_sync;
-     input  [7:0]  rx_tx_TS1;
-     input  [7:0]  rx_tx_TS2;
-     input  [7:0]  rx_tx_TS3;
-     input  [7:0]  rx_tx_block_lock;
+    input  [7:0]  rx_tx_TS1;
+    input  [7:0]  rx_tx_TS2;
+    input  [7:0]  rx_tx_TS3;
+    input  [7:0]  rx_tx_block_lock;
     input         rx_tx_deskew_done;
     input         rx_tx_linkup;
     input  [7:0]  ln0_rx_tx_last_byte_ts3;
@@ -888,7 +888,7 @@ endfunction
     reg          reset_d1_q; 
     wire         reset_d1_din;
     wire         start_train;
-    reg          start_retrain_q; 
+ (*mark_debug = "true"*)   reg          start_retrain_q; 
     wire         start_retrain_din;
     reg [2:0]    start_retrain_dly_q;
     wire [2:0]   start_retrain_dly_din;
@@ -903,11 +903,11 @@ endfunction
     (* mark_debug = "TRUE" *) wire         ts4_done;
     (* mark_debug = "TRUE" *) wire         block_locked;
 
-    reg         ts1_done_q;
-    reg         ts2_done_q;
-    reg         ts3_done_q;
-    reg         ts4_done_q;
-     reg        block_locked_q;
+    (*mark_debug = "true"*) reg         ts1_done_q;
+    (*mark_debug = "true"*) reg         ts2_done_q;
+    (*mark_debug = "true"*) reg         ts3_done_q;
+    (*mark_debug = "true"*) reg         ts4_done_q;
+    (*mark_debug = "true"*) reg         block_locked_q;
 
     wire         tsm_advance;
     wire         tpulse;
@@ -959,7 +959,8 @@ endfunction
     wire         EDPL_window_hit;
     reg [2:0]    retrain_pending_q;
     wire [2:0]   retrain_pending_din;
-    // Preserve this register so we can use it to inject randomn timing constraints into Vivado runs.  2/20/2018   mfred
+    // Preserve this register so we can use it to inject randomn timing constraints into Vivado runs. 
+   (* dont_touch = "yes" *)
     reg   [31:0] dlx_version_q;
     wire [5:0]   dl_deskew_version;
     reg          tick_1us_q;
@@ -1163,7 +1164,7 @@ end
                                                                                  1'b0         ;
 
     assign ctl_gb_tx_zeros[7:0]        = disabled_tx_lanes_q[7:0];        
-    assign ctl_que_tx_ts0              = 1'b0;          //-- todo                  
+    assign ctl_que_tx_ts0              = 1'b0;          
     assign ctl_que_good_lanes[15:0]    = x4OL_mode | x4_degrade_to_inside | x4_degrade_to_outside ?
                                        {8'b0,4'b0001, good_rx_insides_q, good_rx_outsides_q,2'b00} : 
                                        {8'b0,4'b0010, good_rx_insides_q, good_rx_outsides_q,2'b00};         // DL3.1 format          
@@ -1219,7 +1220,6 @@ end
     assign x2_tx_mode_din = ((good_tx_insides_q & ~good_tx_outsides_q) | (~good_tx_insides_q & good_tx_outsides_q)) & (x4_degrade_to_inside | x4_degrade_to_outside);                                         
                                          
 //--  this needs to run at full speed for either mode
-//-- this causes other issues... don't do it    assign ctl_gb_seq_int[6:0]         = x4_not_x8_tx_mux_lock_din ? seq_cnt_q[6:0]:
     assign ctl_gb_seq_int[6:0] = x2_tx_mode_q & ~ctl_gb_train_int        ? seq_cnt_q[6:0]:
                                  x4_not_x8_tx_mode_q & ~ctl_gb_train_int ? seq_cnt_q[7:1]:
                                                                            seq_cnt_q[8:2];

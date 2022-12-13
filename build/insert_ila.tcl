@@ -1,7 +1,14 @@
 # Source: https://forums.xilinx.com/t5/Vivado-TCL-Community/Vivado-TCL-script-to-insert-ILA/td-p/421619
 ######################################################################
 # Automatically inserts ILA instances
+
+
 proc insert_ila {} {
+
+    variable DESIGN
+    set cwd [file dirname [file normalize [info script]]]
+    set logfile  $cwd/$DESIGN/insert_ila.log
+
     ##################################################################
     # sequence through debug nets and organize them by clock in the
     # clock_list array. Also create max and min array for bus indices
@@ -9,6 +16,12 @@ proc insert_ila {} {
     if {[llength $dbgs] == 0} {
         return
     }
+
+    #temporarily limit warining messages to 10
+    set_msg_config -id {[Timing 38-164]} -limit 10
+    set_msg_config -id {[Vivado 12-975]} -limit 10
+
+    puts "----------------------- adding debug nets -----------------------"
     foreach d $dbgs {
         # name is root name of a bus, index is the bit index in the
         # bus
@@ -39,6 +52,10 @@ proc insert_ila {} {
             }
         }
     }
+
+    set_msg_config -id {[Timing 38-164]} -limit 100
+    set_msg_config -id {[Vivado 12-975]} -limit 100
+
     foreach c [array names clock_list] {
         set clk [get_clocks $c]
         if {$clk ne ""} {
@@ -48,10 +65,10 @@ proc insert_ila {} {
             if {$ila_inst eq "u_ila_txoutclk_out_1"} {
                 break
             }
-            puts "Creating ILA $ila_inst"
+            puts "                        Creating ILA $ila_inst"
             ##################################################################
             # create ILA and connect its clock
-            create_debug_core  $ila_inst              ila
+            create_debug_core  $ila_inst              ila >> $logfile
             set_property       C_DATA_DEPTH           2048 [get_debug_cores $ila_inst]
             set_property       C_INPUT_PIPE_STAGES    2 [get_debug_cores $ila_inst]
             set_property       port_width 1           [get_debug_ports $ila_inst/clk]
@@ -64,7 +81,7 @@ proc insert_ila {} {
             # add probes
             set nprobes 0
             foreach n [lsort $clock_list($c)] {
-                puts "Connecting net $n"
+                puts "                          Connecting net $n"
                 set nets {}
                 if {$max($n) < 0} {
                     lappend nets [get_nets $n]
@@ -76,16 +93,16 @@ proc insert_ila {} {
                 }
                 set prb probe$nprobes
                 if {$nprobes > 0} {
-                    create_debug_port $ila_inst probe
+                    create_debug_port $ila_inst probe >> $logfile
                 }
                 set_property port_width [llength $nets] [get_debug_ports $ila_inst/$prb]
-                connect_debug_port $ila_inst/$prb $nets
+                connect_debug_port $ila_inst/$prb $nets >> $logfile
                 incr nprobes
             }
         } else {
-            puts "Cannot find ILA clock"
+            puts "                        Cannot find ILA clock"
             foreach n [lsort $clock_list($c)] {
-                puts "Skipping net $n"
+                puts "                        Skipping net $n"
             }
         }
     }

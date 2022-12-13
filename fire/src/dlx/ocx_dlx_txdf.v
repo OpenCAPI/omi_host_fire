@@ -121,7 +121,6 @@ parameter GEMINI_NOT_APOLLO = 0
 //-- ,vdn                           // -- <> inout        
 );
 
-//!! Bugspray Include : ocx_dlx_txdf ;
 
 // -- tlx interface
 input             tsm_state2_to_3;

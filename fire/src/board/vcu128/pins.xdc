@@ -41,9 +41,9 @@ set_property PACKAGE_PIN H20 [get_ports SDA_IO]
 # This trick is the only way found until now to circumvent the issue
 
 set_property PACKAGE_PIN AL41 [get_ports {DDIMMA_FPGA_REFCLK_N[0]}]
-set_property PACKAGE_PIN AL40 [get_ports {DDIMMA_FPGA_REFCLK_P[0]}] ;  # MGTREFCLK0N_127 FMCP_HSPC_GBTCLK3_M2C_N1 L9 - QUAD_127_REFCLK_P
-set_property PACKAGE_PIN AN41 [get_ports {DDIMMA_FPGA_REFCLK_N[1]}] 
-set_property PACKAGE_PIN AN40 [get_ports {DDIMMA_FPGA_REFCLK_P[1]}] ; # MGTREFCLK0N_126 FMCP_HSPC_GBTCLK2_M2C_N1 L13 - QUAD_126_REFCLK_P
+set_property PACKAGE_PIN AL40 [get_ports {DDIMMA_FPGA_REFCLK_P[0]}]
+set_property PACKAGE_PIN AN41 [get_ports {DDIMMA_FPGA_REFCLK_N[1]}]
+set_property PACKAGE_PIN AN40 [get_ports {DDIMMA_FPGA_REFCLK_P[1]}]
 # following assignmenet is sufficent for _P, _N Rx and Tx lanes
 set_property PACKAGE_PIN AL53 [get_ports {DDIMMA_FPGA_LANE_P[0]}]
 set_property PACKAGE_PIN AM51 [get_ports {DDIMMA_FPGA_LANE_P[1]}]
@@ -59,9 +59,9 @@ set_property PACKAGE_PIN AU53 [get_ports {DDIMMA_FPGA_LANE_P[7]}]
 # This trick is the only way found until now to circumvent the issue
 
 set_property PACKAGE_PIN AR41 [get_ports {DDIMMB_FPGA_REFCLK_N[0]}]
-set_property PACKAGE_PIN AR40 [get_ports {DDIMMB_FPGA_REFCLK_P[0]}]  ;  # MGTREFCLK0N_125 FMCP_HSPC_GBTCLK1_M2C_N B21 - QUAD_125_REFCLK_P
+set_property PACKAGE_PIN AR40 [get_ports {DDIMMB_FPGA_REFCLK_P[0]}]
 set_property PACKAGE_PIN AV43 [get_ports {DDIMMB_FPGA_REFCLK_N[1]}]
-set_property PACKAGE_PIN AV42 [get_ports {DDIMMB_FPGA_REFCLK_P[1]}]  ; # MGTREFCLK0N_124 FMCP_HSPC_GBTCLK0_M2C_N D5 - QUAD_124_REFCLK_P
+set_property PACKAGE_PIN AV42 [get_ports {DDIMMB_FPGA_REFCLK_P[1]}]
 
 # following assignmenet is sufficent for _P, _N Rx and Tx lanes
 set_property PACKAGE_PIN AV51 [get_ports {DDIMMB_FPGA_LANE_P[0]}]
@@ -140,3 +140,4 @@ set_property PULLUP true [get_ports SDA_IO]
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
 set_property CONFIG_MODE SPIx4 [current_design]
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+

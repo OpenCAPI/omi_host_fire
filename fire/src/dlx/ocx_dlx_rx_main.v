@@ -95,7 +95,6 @@ parameter  GEMINI_NOT_APOLLO = 0
 //--  ,vdn                           // <> inout
 );
 
-//!! Bugspray Include : ocx_dlx_rx_main ;
 
 input           reset;                  //-- reset from tx delayed one cycle
 input           training_enable;        //-- training enable from tx delayed one cycle to line up with data passed to lanes

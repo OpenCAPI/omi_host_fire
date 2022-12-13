@@ -1,18 +1,35 @@
 #!/bin/bash
-# This script takes the output of the wizard generating an ultrascale example
-#  and tunes it for astra design
-# First it changes all names
-# Then is looks for 64b66b, gtpowergood, etc blocs and comments them
-# Finally it adds bit_synchronizer_vio_gtwiz_buffbypass_rx_error_0_inst 
-# instance after bit_synchronizer_vio_gtwiz_buffbypass_tx_error_0_inst 
-# When '' can't be used, we use " to avoid escaping "1b'0"
-# at the end of the last append (a) command, we need to have a carriage return before the terminating bracket }"
-# This is why, we didn't find a way to generate the other one, hence the second script gtwiz_top2.sh (bit_synchronizer_vio_gtwiz_reset_tx_done_0_inst)
-# Find a pattern an replace part of the lines to run on hb0, hb1, etc ...: ".*" replaces 0, 1, 2, etc .... and then {s/xx/yy/} replaces on the found line.
+##
+## Copyright 2022 International Business Machines
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+## http://www.apache.org/licenses/LICENSE-2.0
+##
+## The patent license granted to you in Section 3 of the License, as applied
+## to the "Work," hereby includes implementations of the Work in physical form.
+##
+## Unless required by applicable law or agreed to in writing, the reference design
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+## The background Specification upon which this is based is managed by and available from
+## the OpenCAPI Consortium.  More information can be found at https://opencapi.org.
+##
+
+# This script takes the output of the Xilinx wizard generated Ultrascale GTY example
+# and tunes files for ASTRA design.
+# Few tricks:
+# When '' can't be used, "" are used to avoid escaping (for ex in "1b'0" case)
+# At the end of the last append (a) command, we need to have a carriage return before the terminating bracket }"
+# To find a pattern and replace part of the lines containing hb0, hb1, etc ...: ".*" replaces 0, 1, 2, etc .... and then {s/xx/yy/} replaces item in these lines.
 # /assign hb.*_gtwiz_userdata_rx_int/{s/_gtwiz_userdata_rx_int/_gtwiz_userdata_rx/}" \
-# remove from 868 up to 1142 after "PRBS STIMULUS, CHECKING, AND LINK MANAGEMENT" is found
-# When a long text has to be inserted, addingx files associated with r command are used.
-# pay attention that when using "{" to group command, it requires a CR. So we decided to move this specific command into separated 
+# Remove from 868 up to 1142 after "PRBS STIMULUS, CHECKING, AND LINK MANAGEMENT" is found
+# When a long text has to be inserted, addingx files associated with r (read) command are used.
+# Pay attention that when using "{" to group command, it requires a CR. So we decided to move this specific command into separated 
 # sed command lines at the end of the script.
 
 sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
@@ -128,12 +145,12 @@ sed -i "s/wire \[0\:0\] gtwiz_reset_tx_pll_and_datapath_int;/wire \[0\:0\] gtwiz
 
 sed -i "s/wire \[0\:0\] gtwiz_reset_tx_datapath_int;/wire \[0\:0\] gtwiz_reset_tx_datapath_int = 1\'b0;/"  dlx_phy_wrap_ref.v
 
-sed -i '/output reg  link_down_latched_out =/r adding2'  dlx_phy_wrap_ref.v
+sed -i '/output reg  link_down_latched_out =/r adding_fire2'  dlx_phy_wrap_ref.v
 
-sed -i '/assign hb0_gtwiz_buffbypass_tx_error_int = gtwiz_buffbypass_tx_error_int/r adding3' dlx_phy_wrap_ref.v
+sed -i '/assign hb0_gtwiz_buffbypass_tx_error_int = gtwiz_buffbypass_tx_error_int/r adding_fire3' dlx_phy_wrap_ref.v
 
-sed -i '/.o_out  (gtwiz_buffbypass_tx_done_vio_sync/{n;n;r adding4
+sed -i '/.o_out  (gtwiz_buffbypass_tx_done_vio_sync/{n;n;r adding_fire4
 }' dlx_phy_wrap_ref.v
 
-sed -i '/o_out  (gtwiz_buffbypass_rx_error_vio_sync/{n;n;r adding5
+sed -i '/o_out  (gtwiz_buffbypass_rx_error_vio_sync/{n;n;r adding_fire5
 }' dlx_phy_wrap_ref.v

@@ -934,7 +934,8 @@ begin
  --ice_resetn        <= ocde and sys_resetn_vio and dut_resetn_vio;
  --raw_resetn_int   <= raw_resetn AND NOT dlx_reset;
  --raw_resetn_int   <= NOT dlx_reset3;
- raw_resetn_int   <= NOT dlx_reset0; -- #VCU128 delx_reset3 is not connected in this release
+ --raw_resetn_int   <= NOT dlx_reset0; -- #VCU128 dlx_reset3 is not connected in this release
+ raw_resetn_int   <= NOT(dlx_reset0) and ocde_int; -- #VCU128 dlx_reset3 is not connected in this release - BM:Add AND with ocde to reset the iic
 
   counter0 : entity work.counter
     port map (

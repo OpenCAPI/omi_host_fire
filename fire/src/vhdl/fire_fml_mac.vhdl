@@ -153,12 +153,12 @@ architecture fire_fml_mac of fire_fml_mac is
 
 begin
 
-  ddimma_resetn       <= reset_control(3);
-  ddimmb_resetn       <= reset_control(2);
-  ddimmc_resetn       <= reset_control(1);
-  ddimmd_resetn       <= reset_control(0);
-  ddimmw_resetn       <= reset_control(4);
-  ddimms_resetn       <= reset_control(5);
+  ddimma_resetn       <= reset_control(3) AND sys_resetn; -- adding sys_resetn to reset devices with the genaral reset when a device locks the i2c bus
+  ddimmb_resetn       <= reset_control(2) AND sys_resetn;
+  ddimmc_resetn       <= reset_control(1) AND sys_resetn;
+  ddimmd_resetn       <= reset_control(0) AND sys_resetn;
+  ddimmw_resetn       <= reset_control(4) AND sys_resetn;
+  ddimms_resetn       <= reset_control(5) AND sys_resetn;
 
   led_ddimma_red   <= led_ddimma_red_hw_i   when led_override_enable(13) = '0' else led_control(13);
   led_ddimma_green <= led_ddimma_green_hw_i when led_override_enable(12) = '0' else led_control(12);

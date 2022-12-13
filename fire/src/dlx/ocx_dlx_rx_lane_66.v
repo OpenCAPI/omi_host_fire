@@ -50,7 +50,6 @@ module ocx_dlx_rx_lane_66 (
 
 );
 
-//!! Bugspray Include : ocx_dlx_rx_lane_66 ;
 
 //-- phy interface through rx
 input           ln_valid_in;            //-- data from phy is valid

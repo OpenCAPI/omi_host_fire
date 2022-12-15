@@ -1,4 +1,4 @@
-#!/bin/bash
+
 ##
 ## Copyright 2022 International Business Machines
 ##
@@ -20,5 +20,11 @@
 ## the OpenCAPI Consortium.  More information can be found at https://opencapi.org.
 ##
 
-sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
-    ./gtwizard_ultrascale_0_example_bit_sync.v  > DLx_phy_example_bit_sync.v
+rm .OMI_IPs_fire_*
+rm -rf ../ip_created_for_fire
+rm -rf fire*
+rm -rf ../fire/src/ip/managed_ip_project
+rm ../fire/src/verilog/DLx*
+rm ../fire/src/verilog/dlx*
+rm -rf ../fire/src/headers
+rm ../fire/src/vhdl/meta_pkg.vhdl

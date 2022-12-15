@@ -565,6 +565,16 @@ port map (
     c3s_response_valid_stg_out => c3s_dlx_response_valid_staged
 );
 
+c3s_axi_async : entity work.axi_async
+port map (
+   s0_axi_aclk_a => c3s_dlx_axis_aclk      , -- OVR: axi_async(c3s_axi_async)
+   s0_axi_aclk_b => cclk                   , -- OVR: axi_async(c3s_axi_async)
+   s0_axi_i_a    => c3s_dlx_axis_i_pipe_in , -- OVR: axi_async(c3s_axi_async)
+   s0_axi_i_b    => c3s_dlx_axis_i_pipe_out, -- OVD: axi_async(c3s_axi_async)
+   s0_axi_o_a    => c3s_dlx_axis_o_pipe_out, -- OVD: axi_async(c3s_axi_async)
+   s0_axi_o_b    => c3s_dlx_axis_o_pipe_in   -- OVR: axi_async(c3s_axi_async)
+);
+
  fbist : entity work.fbist_mac
  port map (
      cclk               => cclk                   , -- MSR: fbist_mac(fbist)
@@ -577,6 +587,16 @@ port map (
      fbist_axis_o       => fbist_axis_o_pipe_in   , -- OVD: fbist_mac(fbist)
      sys_reset          => creset                , -- MSR: fbist_mac(fbist)
      sysclk             => cclk                     -- MSR: fbist_mac(fbist)
+ );
+
+ fbist_axi_async : entity work.axi_async
+ port map (
+     s0_axi_aclk_a => fbist_axis_aclk      , -- OVR: axi_async(fbist_axi_async)
+     s0_axi_aclk_b => cclk                 , -- OVR: axi_async(fbist_axi_async)
+     s0_axi_i_a    => fbist_axis_i_pipe_in , -- OVR: axi_async(fbist_axi_async)
+     s0_axi_i_b    => fbist_axis_i_pipe_out, -- OVD: axi_async(fbist_axi_async)
+     s0_axi_o_a    => fbist_axis_o_pipe_out, -- OVD: axi_async(fbist_axi_async)
+     s0_axi_o_b    => fbist_axis_o_pipe_in   -- OVR: axi_async(fbist_axi_async)
  );
 
 oc_host_cfg0 : entity work.oc_host_cfg
@@ -736,26 +756,6 @@ port map (
     s0_axi_o_a    => oc_cfg0_axis_o_pipe_out, -- OVD: axi3_async(oc_cfg0_axi_async)
     s0_axi_o_b    => oc_cfg0_axis_o_pipe_in   -- OVR: axi3_async(oc_cfg0_axi_async)
 );
-
-c3s_axi_async : entity work.axi_async
-port map (
-   s0_axi_aclk_a => c3s_dlx_axis_aclk      , -- OVR: axi_async(c3s_axi_async)
-   s0_axi_aclk_b => cclk                   , -- OVR: axi_async(c3s_axi_async)
-   s0_axi_i_a    => c3s_dlx_axis_i_pipe_in , -- OVR: axi_async(c3s_axi_async)
-   s0_axi_i_b    => c3s_dlx_axis_i_pipe_out, -- OVD: axi_async(c3s_axi_async)
-   s0_axi_o_a    => c3s_dlx_axis_o_pipe_out, -- OVD: axi_async(c3s_axi_async)
-   s0_axi_o_b    => c3s_dlx_axis_o_pipe_in   -- OVR: axi_async(c3s_axi_async)
-);
-
- fbist_axi_async : entity work.axi_async
- port map (
-     s0_axi_aclk_a => fbist_axis_aclk      , -- OVR: axi_async(fbist_axi_async)
-     s0_axi_aclk_b => cclk                 , -- OVR: axi_async(fbist_axi_async)
-     s0_axi_i_a    => fbist_axis_i_pipe_in , -- OVR: axi_async(fbist_axi_async)
-     s0_axi_i_b    => fbist_axis_i_pipe_out, -- OVD: axi_async(fbist_axi_async)
-     s0_axi_o_a    => fbist_axis_o_pipe_out, -- OVD: axi_async(fbist_axi_async)
-     s0_axi_o_b    => fbist_axis_o_pipe_in   -- OVR: axi_async(fbist_axi_async)
- );
 
 oc_host_cfg0_axi_async : entity work.axi_async
 port map (

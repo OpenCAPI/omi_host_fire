@@ -20,5 +20,11 @@
 ## the OpenCAPI Consortium.  More information can be found at https://opencapi.org.
 ##
 
-sed -e 's/gtwizard_ultrascale_0/DLx_phy/g' \
-    ./gtwizard_ultrascale_0_example_bit_sync.v  > DLx_phy_example_bit_sync.v
+# This executes several scripts. They assume Xilinx example has been prepared and will create the corresponding host FIRE files.
+./gtwiz_example_top2phy_wrap_prep1.sh
+./gtwiz_example_top2phy_wrap_prep2.sh
+./gtwiz_reset.sh
+./gtwiz_userclk_tx_dlx.sh
+./gtwiz_bit_sync.sh
+./gtwiz_init_dlx.sh
+./gtwiz_wrapper.sh

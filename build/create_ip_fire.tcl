@@ -1,3 +1,24 @@
+##
+## Copyright 2022 International Business Machines
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+## http://www.apache.org/licenses/LICENSE-2.0
+##
+## The patent license granted to you in Section 3 of the License, as applied
+## to the "Work," hereby includes implementations of the Work in physical form.
+##
+## Unless required by applicable law or agreed to in writing, the reference design
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+## The background Specification upon which this is based is managed by and available from
+## the OpenCAPI Consortium.  More information can be found at https://opencapi.org.
+##
+
 #############################################################################
 # create_FIRE_IPs was coded to get rid of xci calls too dependent on frequency and vivado release
 # IPs are configured as in astra_5cd07be_333 and astra_b20b168_400
@@ -12,10 +33,10 @@ proc create_FIRE_IPs {} {
     if {[catch {file mkdir $ip_dir} err opts] != 0} {
         puts $err
     }
-    set log_file $cwd/create_ip.log
+    set log_file $cwd/$DESIGN/create_ip.log
 
   puts "                        generating IP axi_iic_0"
-  create_ip -name axi_iic -vendor xilinx.com -library ip -version 2.0 -module_name axi_iic_0 -dir $ip_dir >> $log_file
+  create_ip -name axi_iic -vendor xilinx.com -library ip -version 2.* -module_name axi_iic_0 -dir $ip_dir >> $log_file
   set_property -dict [list                                 \
                       CONFIG.AXI_ACLK_FREQ_MHZ {200}       \
                       CONFIG.C_SCL_INERTIAL_DELAY {8}      \
@@ -26,7 +47,7 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/axi_iic_0/axi_iic_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi_iic_0/axi_iic_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi_iic_0/axi_iic_0.xci] -no_script  >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi_iic_0/axi_iic_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi_iic_0/axi_iic_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP jtag_axi_0"
@@ -40,7 +61,7 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/jtag_axi_0/jtag_axi_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/jtag_axi_0/jtag_axi_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/jtag_axi_0/jtag_axi_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/jtag_axi_0/jtag_axi_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/jtag_axi_0/jtag_axi_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
 #  puts "                        generating IP in_system_ibert_0"
@@ -55,7 +76,7 @@ proc create_FIRE_IPs {} {
 #  generate_target {instantiation_template}     [get_files $ip_dir/in_system_ibert_0/in_system_ibert_0.xci] >> $log_file  
 #  generate_target all                          [get_files $ip_dir/in_system_ibert_0/in_system_ibert_0.xci] >> $log_file  
 #  export_ip_user_files -of_objects             [get_files $ip_dir/in_system_ibert_0/in_system_ibert_0.xci] -no_script >> $log_file  
-#  export_simulation    -of_objects             [get_files $ip_dir/in_system_ibert_0/in_system_ibert_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+#  export_simulation    -of_objects             [get_files $ip_dir/in_system_ibert_0/in_system_ibert_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 #
 #
 #  puts "                        generating IP in_system_ibert_1"
@@ -70,7 +91,7 @@ proc create_FIRE_IPs {} {
 #  generate_target {instantiation_template}     [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] >> $log_file  
 #  generate_target all                          [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] >> $log_file  
 #  export_ip_user_files -of_objects             [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] -no_script >> $log_file  
-#  export_simulation    -of_objects             [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+#  export_simulation    -of_objects             [get_files $ip_dir/in_system_ibert_1/in_system_ibert_1.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 #=======================================================================================================
 # workaround is a temporary assignment of the tranceivers locations (X0Y31...) during the ip creation.
@@ -155,7 +176,7 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_0/gtwizard_ultrascale_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_0/gtwizard_ultrascale_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_0/gtwizard_ultrascale_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_0/gtwizard_ultrascale_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_0/gtwizard_ultrascale_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
 
@@ -237,7 +258,7 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_1/gtwizard_ultrascale_1.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
   # for Apollo board add 2 additional ports - No implementation for other than apollo card yet
   if { $OMI_PORTS == "4" } {
@@ -295,7 +316,7 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_2/gtwizard_ultrascale_2.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
 
@@ -355,25 +376,29 @@ proc create_FIRE_IPs {} {
   generate_target {instantiation_template}     [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/gtwizard_ultrascale_3/gtwizard_ultrascale_3.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 } 
 #end of apollo case adding 2 additional ports
 
-puts "                        Creating a projet example based on gtwizard_ultrascale ..."
-open_example_project -force -dir $ip_dir [get_ips  gtwizard_ultrascale_0]
-puts "                        Preparing DLx Files from gtwizard_ultrascale_0_ex project ..."
+puts "----------------------- Creating a projet example based on gtwizard_ultrascale -------------"
+open_example_project -force -quiet -dir $ip_dir [get_ips  gtwizard_ultrascale_0]
+puts "----------------------- Project example creation completed ---------------------------------"
+puts "                            Preparing DLx Files from gtwizard_ultrascale_0_ex project"
 exec bash -c "cp $ip_dir/../scripts/* $ip_dir/gtwizard_ultrascale_0_ex/imports"
-exec bash -c "cd $ip_dir/gtwizard_ultrascale_0_ex/imports; ./all_shells.sh"
+exec bash -c "cd $ip_dir/gtwizard_ultrascale_0_ex/imports; ./all_shells4fire.sh"
 exec bash -c "rm $ip_dir/gtwizard_ultrascale_0_ex/imports/dlx_phy_wrap_ref.v"
 exec bash -c "rm $ip_dir/gtwizard_ultrascale_0_ex/imports/DLx_phy_example_wrapper_ref.v"
-puts "                        Copying verilog DLx files into fire/src/verilog/ ..."
-exec bash -c "cp $ip_dir/gtwizard_ultrascale_0_ex/imports/DLx_phy_example* $ip_dir/../fire/src/verilog/"
-puts "                        Copying verilog top files into fire/src/verilog/dlx_phy_wrapxx"
-exec bash -c "cp $ip_dir/gtwizard_ultrascale_0_ex/imports/dlx_phy* $ip_dir/../fire/src/verilog/"
+puts "                            Copying verilog DLx files into ../$DESIGN/src/verilog/"
+exec bash -c "cp $ip_dir/gtwizard_ultrascale_0_ex/imports/DLx_phy_example* $ip_dir/../$DESIGN/src/verilog/"
+puts "                            Copying verilog top files into ../$DESIGN/src/verilog/dlx_phy_wrapxx"
+exec bash -c "cp $ip_dir/gtwizard_ultrascale_0_ex/imports/dlx_phy* $ip_dir/../$DESIGN/src/verilog/"
 
-puts "                        Moving wrapper functions into newly created directory: fire/src/headers/ ..."
-exec bash -c "mkdir -p $ip_dir/../fire/src/headers/"
-exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v $ip_dir/../fire/src/headers/"
+puts "                            Moving wrapper functions into new ../$DESIGN/src/headers/ directory"
+#exec bash -c "mkdir -p $ip_dir/../$DESIGN/src/headers/"
+if {[catch {file mkdir $ip_dir/../$DESIGN/src/headers} err opts] != 0} {
+    puts $err
+}
+exec bash -c "mv $ip_dir/../$DESIGN/src/verilog/DLx_phy_example_wrapper_functions.v $ip_dir/../$DESIGN/src/headers/"
 
 
 
@@ -474,7 +499,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/clk_wiz_sysclk/clk_wiz_sysclk.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi4lite_register_slice_0"
@@ -493,7 +518,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi4lite_register_slice_0/axi4lite_register_slice_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi4lite_register_slice_0/axi4lite_register_slice_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi4lite_register_slice_0/axi4lite_register_slice_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_register_slice_0/axi4lite_register_slice_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_register_slice_0/axi4lite_register_slice_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi3_register_slice_0"
@@ -511,7 +536,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_register_slice_0/axi3_register_slice_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi3_register_slice_0/axi3_register_slice_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi3_register_slice_0/axi3_register_slice_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi3_register_slice_0/axi3_register_slice_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi3_register_slice_0/axi3_register_slice_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi3_register_slice_slr_0"
@@ -531,7 +556,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi3_register_slice_slr_0/axi3_register_slice_slr_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi4lite_crossbar_0    for $OMI_PORTS ports"
@@ -587,7 +612,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_0/axi4lite_crossbar_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi4lite_crossbar_1    for $OMI_PORTS ports"
@@ -640,7 +665,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi4lite_crossbar_1/axi4lite_crossbar_1.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi3_crossbar_0        for $OMI_PORTS ports"
@@ -721,7 +746,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi3_crossbar_0/axi3_crossbar_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi3_crossbar_1        for $OMI_PORTS ports"
@@ -776,7 +801,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi3_crossbar_1/axi3_crossbar_1.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP axi3_axi4lite_protocol_converter_0"
@@ -795,7 +820,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi3_axi4lite_protocol_converter_0/axi3_axi4lite_protocol_converter_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi3_axi4lite_protocol_converter_0/axi3_axi4lite_protocol_converter_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi3_axi4lite_protocol_converter_0/axi3_axi4lite_protocol_converter_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi3_axi4lite_protocol_converter_0/axi3_axi4lite_protocol_converter_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi3_axi4lite_protocol_converter_0/axi3_axi4lite_protocol_converter_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
   puts "                        generating IP axi4_axi3_protocol_converter_0"
   create_ip -name axi_protocol_converter -vendor xilinx.com -library ip -version 2.1 -module_name axi4_axi3_protocol_converter_0 -dir $ip_dir >> $log_file
@@ -812,7 +837,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/axi4_axi3_protocol_converter_0/axi4_axi3_protocol_converter_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/axi4_axi3_protocol_converter_0/axi4_axi3_protocol_converter_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/axi4_axi3_protocol_converter_0/axi4_axi3_protocol_converter_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/axi4_axi3_protocol_converter_0/axi4_axi3_protocol_converter_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/axi4_axi3_protocol_converter_0/axi4_axi3_protocol_converter_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP vio_0"
@@ -835,7 +860,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/vio_0/vio_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/vio_0/vio_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/vio_0/vio_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/vio_0/vio_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/vio_0/vio_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
   puts "                        generating IP proc_sys_reset_0"
@@ -850,7 +875,7 @@ exec bash -c "mv $ip_dir/../fire/src/verilog/DLx_phy_example_wrapper_functions.v
   generate_target {instantiation_template}     [get_files $ip_dir/proc_sys_reset_0/proc_sys_reset_0.xci] >> $log_file  
   generate_target all                          [get_files $ip_dir/proc_sys_reset_0/proc_sys_reset_0.xci] >> $log_file  
   export_ip_user_files -of_objects             [get_files $ip_dir/proc_sys_reset_0/proc_sys_reset_0.xci] -no_script >> $log_file  
-  export_simulation    -of_objects             [get_files $ip_dir/proc_sys_reset_0/proc_sys_reset_0.xci] -directory ip_dir/ip_user_files/sim_scripts -force >> $log_file
+  export_simulation    -of_objects             [get_files $ip_dir/proc_sys_reset_0/proc_sys_reset_0.xci] -directory $ip_dir/ip_user_files/sim_scripts -force >> $log_file
 
 
 }

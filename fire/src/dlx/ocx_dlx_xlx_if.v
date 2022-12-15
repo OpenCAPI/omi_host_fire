@@ -126,7 +126,7 @@ assign pulse_count_din[2:0]        = (xtsm_q == find_sync)  ? 3'b000            
  
 
 // Reset Xilinx Transceiver's receiver state machine after sync pattern is detected and need to recenter eye at faster data rate                                                 
-//--jda 5/17 always @ (opt_gckn)
+
 always @ (*)
 begin
       case (xtsm_q[2:0])

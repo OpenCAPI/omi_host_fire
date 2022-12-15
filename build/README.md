@@ -2,8 +2,7 @@
 
 This directory contains the various scripts needed to synthesize and
 implement RTL, as well as generate a bitstream, for an FPGA using the
-Fire design. (it was targeting fire (host) and ice (device) but
-only fire is available yet. Any "$design" found should be set to "fire")
+Fire design.
 
 The following command launches for the entire process, with some parallelization:
 
@@ -19,7 +18,7 @@ GUI). The command output is written to `$design/$command.log`, and
 also colorized and printed to the screen. Output files are saved in
 the `$design/` directory, including a design checkpoint (.dcp file).
 
-__run_all.sh__: Takes a design as an argument, and runs the main
+__run_fire.sh__: Runs the build image process for fire. Runs the main
 synthesize, implement, and gen_bitstream loop sequentially. If run on
 a machine with a `bsub` binary found (aka LSF is installed), then the
 commands are dispatched via LSF. Additionally, 16 implementation
@@ -31,10 +30,6 @@ that meets timing is used for the bitstream. Also in this mode, the
 __fire/__ : Contain all output files from Vivado. Each
 command outputs to a log stored in the top-level directory, and other
 files are stored in a sub-directory per command.
-
-__fire_deploy/__ : Contain "important" files from
-the run_all.sh script. These are files that could be worth using at a
-later point.
 
 ## Vivado TCL Scripts
 

@@ -107,7 +107,7 @@ parameter  GEMINI_NOT_APOLLO = 0
  
 ,opt_gckn                      //--   < input 
 ,ocde
-,dl_debug_vector
+,dl_debug_vector               //--  output [127:0]
 ,reg_04_val                    // -- input [31:0]
 ,reg_04_hwwe                      // -- output
 ,reg_04_update                    // -- output [31:0]
@@ -137,7 +137,7 @@ parameter  GEMINI_NOT_APOLLO = 0
 ,tsm_state2_to_3
 ,tsm_state4_to_5
 ,tsm_state6_to_1
-,lane_force_unlock
+,lane_force_unlock             // -- > input [7:0]
 );
 // ----------------------
 // -- RX interface
@@ -192,7 +192,7 @@ output            ln7_rx_slip;
 // -- tlx interface
 output            dlx_tlx_flit_credit;
 output [2:0]      dlx_tlx_init_flit_depth;
-input             tlx_dlx_flit_valid;
+(*mark_debug = "true" *)input             tlx_dlx_flit_valid;
 input  [511:0]    tlx_dlx_flit;
 // -- Phy interface
 output [63:0]     dlx_l0_tx_data;
